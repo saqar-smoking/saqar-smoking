@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" width="240" height="280" role="img" aria-label="AL SAQAR SQ crest logo">
+  <!-- Recreated as clean vector art from the physical SQ crest logo supplied by the client. -->
+  <g fill="none" stroke="#141312" stroke-width="1">
+    <!-- Crown -->
+    <g fill="#141312" stroke="none">
+      <path d="M60 118
+               L58 78
+               L78 96
+               L92 58
+               L100 88
+               L120 52
+               L140 88
+               L148 58
+               L162 96
+               L182 78
+               L180 118
+               Z" />
+      <!-- crown base band -->
+      <rect x="58" y="116" width="124" height="16" rx="3" />
+      <!-- pearls on band -->
+      <circle cx="72" cy="124" r="3.4" fill="#f4f1ea" />
+      <circle cx="92" cy="124" r="3.4" fill="#f4f1ea" />
+      <circle cx="112" cy="124" r="3.4" fill="#f4f1ea" />
+      <circle cx="132" cy="124" r="3.4" fill="#f4f1ea" />
+      <circle cx="152" cy="124" r="3.4" fill="#f4f1ea" />
+      <circle cx="168" cy="124" r="3.4" fill="#f4f1ea" />
+    </g>
+
+    <!-- Double ring -->
+    <circle cx="120" cy="196" r="76" stroke-width="3" />
+    <circle cx="120" cy="196" r="68" stroke-width="1.4" />
+
+    <!-- Monogram -->
+    <text x="120" y="222" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="92" fill="#141312" stroke="none" letter-spacing="-2">SQ</text>
+
+    <!-- Flourish beneath the crest -->
+    <path d="M18 258
+             C 42 244, 58 244, 76 254
+             C 96 266, 108 266, 120 254
+             C 132 266, 144 266, 164 254
+             C 182 244, 198 244, 222 258"
+          stroke-width="2.4" stroke-linecap="round" />
+    <path d="M76 254 C 84 262, 84 272, 74 274 C 66 275, 62 268, 68 263" stroke-width="1.6" />
+    <path d="M164 254 C 156 262, 156 272, 166 274 C 174 275, 178 268, 172 263" stroke-width="1.6" />
+  </g>
+</svg>

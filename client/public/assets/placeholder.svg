@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Product image placeholder">
+  <rect width="800" height="800" fill="#e9e6df"/>
+  <rect x="0.5" y="0.5" width="799" height="799" fill="none" stroke="#c8c2b4" stroke-width="1"/>
+  <g fill="none" stroke="#a39c8a" stroke-width="2">
+    <circle cx="400" cy="360" r="90"/>
+    <path d="M310 500 h180 l30 90 h-240 z"/>
+  </g>
+  <text x="400" y="640" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#8b8371" letter-spacing="3">AL SAQAR — IMAGE PENDING</text>
+</svg>
