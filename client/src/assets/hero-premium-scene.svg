@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Luxury smoking shop hero with shisha, tobacco and vape devices in a dark Dubai skyline">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#020406"/>
+      <stop offset="28%" stop-color="#090d11"/>
+      <stop offset="60%" stop-color="#141714"/>
+      <stop offset="100%" stop-color="#07080b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f8e3af"/>
+      <stop offset="35%" stop-color="#d7b262"/>
+      <stop offset="70%" stop-color="#b47a39"/>
+      <stop offset="100%" stop-color="#f5d483"/>
+    </linearGradient>
+    <linearGradient id="chrome" x1="0" x2="1">
+      <stop offset="0%" stop-color="#20242a"/>
+      <stop offset="100%" stop-color="#080a0d"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f8e8c4"/>
+      <stop offset="100%" stop-color="#cb8f4b"/>
+    </linearGradient>
+    <linearGradient id="pack" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f2d7a3"/>
+      <stop offset="100%" stop-color="#bb7d38"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="150%" height="170%">
+      <feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="smoke" x="-20%" y="-20%" width="160%" height="190%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+
+  <g opacity="0.95">
+    <path d="M0 760 L1600 760 L1600 900 L0 900 Z" fill="#050607"/>
+    <path d="M0 680 L130 680 L130 620 L220 620 L220 542 L302 542 L302 620 L392 620 L392 580 L500 580 L500 652 L612 652 L612 592 L710 592 L710 660 L812 660 L812 602 L912 602 L912 660 L1008 660 L1008 615 L1102 615 L1102 520 L1194 520 L1194 640 L1295 640 L1295 586 L1402 586 L1402 620 L1506 620 L1506 660 L1600 660 L1600 900 L0 900 Z" fill="#101315"/>
+    <g fill="#f3d38a" opacity="0.9">
+      <rect x="1028" y="294" width="12" height="42"/>
+      <rect x="1060" y="260" width="12" height="70"/>
+      <rect x="1096" y="308" width="12" height="40"/>
+      <rect x="1188" y="308" width="12" height="36"/>
+      <rect x="1370" y="276" width="12" height="40"/>
+      <rect x="1430" y="246" width="12" height="62"/>
+    </g>
+  </g>
+
+  <g opacity="0.9">
+    <rect x="455" y="312" width="8" height="160" fill="#e0b46a" opacity="0.4"/>
+    <rect x="488" y="286" width="10" height="186" fill="#e0b46a" opacity="0.36"/>
+    <rect x="519" y="318" width="9" height="156" fill="#e0b46a" opacity="0.4"/>
+    <rect x="570" y="270" width="12" height="204" fill="#e0b46a" opacity="0.22"/>
+    <rect x="610" y="332" width="8" height="146" fill="#e0b46a" opacity="0.24"/>
+    <rect x="660" y="280" width="14" height="198" fill="#e0b46a" opacity="0.21"/>
+    <rect x="700" y="310" width="10" height="168" fill="#e0b46a" opacity="0.2"/>
+    <rect x="770" y="272" width="16" height="204" fill="#e0b46a" opacity="0.2"/>
+  </g>
+
+  <g opacity="0.8" filter="url(#smoke)">
+    <path d="M930 214 C976 182 1023 186 1052 228 C1070 254 1063 288 1030 303 C992 320 950 305 925 276 C908 255 908 232 930 214 Z" fill="#d8d1c4" opacity="0.8"/>
+    <path d="M1006 152 C1060 116 1122 122 1164 167 C1192 197 1192 240 1150 260 C1108 280 1054 268 1020 231 C990 197 983 175 1006 152 Z" fill="#d7d0c7" opacity="0.72"/>
+    <path d="M878 260 C920 230 956 230 985 256 C1006 275 1004 312 970 329 C928 348 884 335 864 306 C855 289 856 275 878 260 Z" fill="#d8d0c8" opacity="0.65"/>
+  </g>
+
+  <g transform="translate(760 145)" filter="url(#shadow)">
+    <ellipse cx="230" cy="620" rx="380" ry="58" fill="#050707" opacity="0.44"/>
+
+    <g transform="translate(18 8)">
+      <path d="M175 215 L160 515 L342 515 L328 215 Z" fill="url(#chrome)"/>
+      <path d="M145 190 L360 190 L396 222 L110 222 Z" fill="#1d2024"/>
+      <path d="M210 146 L306 146 L342 190 L175 190 Z" fill="url(#gold)"/>
+      <path d="M148 222 L428 222 L448 284 L128 284 Z" fill="#171b1f"/>
+      <path d="M170 284 L402 284 L422 324 L150 324 Z" fill="#121416"/>
+      <path d="M206 332 L296 332 C314 332 326 346 326 364 L326 458 C326 474 314 487 296 487 L206 487 C188 487 176 474 176 458 L176 364 C176 346 188 332 206 332 Z" fill="#0a0b0d"/>
+      <path d="M242 147 L246 198 L280 198 L285 147 Z" fill="#d6ac5f"/>
+      <path d="M162 180 L188 214 L210 206 L182 170 Z" fill="#d4a758"/>
+      <path d="M337 180 L312 214 L289 206 L318 170 Z" fill="#d4a758"/>
+      <path d="M172 336 C211 380 236 410 250 410 C268 410 298 376 332 336" fill="none" stroke="#f9ebbd" stroke-width="7" stroke-linecap="round" opacity="0.94"/>
+      <path d="M171 176 Q250 110 330 176" fill="none" stroke="#f7d68d" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+      <circle cx="250" cy="110" r="26" fill="#f9ebbd"/>
+      <circle cx="250" cy="110" r="11" fill="#13171a"/>
+      <path d="M197 490 C218 516 235 532 250 538 C265 532 283 516 303 490" fill="none" stroke="#3a4044" stroke-width="8" stroke-linecap="round"/>
+      <path d="M206 234 L234 234" stroke="#f0d38e" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+      <path d="M275 234 L304 234" stroke="#f0d38e" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+    </g>
+
+    <g transform="translate(16 160)">
+      <rect x="0" y="0" width="186" height="216" rx="16" fill="#111214"/>
+      <rect x="18" y="18" width="150" height="162" rx="12" fill="url(#pack)"/>
+      <rect x="30" y="40" width="126" height="52" rx="8" fill="#14171a" opacity="0.72"/>
+      <text x="93" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#f8e7bd">AL SAQAR</text>
+      <rect x="36" y="102" width="116" height="56" rx="8" fill="#14171a"/>
+      <text x="94" y="138" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#eccb7e">TOBACCO</text>
+      <rect x="20" y="184" width="146" height="12" rx="7" fill="#cb9143"/>
+    </g>
+
+    <g transform="translate(500 182)">
+      <path d="M0 184 L154 184 L180 212 L0 212 Z" fill="#d4a963" opacity="0.93"/>
+      <path d="M112 36 L112 184 L146 184 L146 36 Z" fill="#15181b"/>
+      <path d="M28 38 L108 38 L142 86 L0 86 Z" fill="#121417"/>
+      <path d="M28 86 L130 86 C142 86 151 95 151 108 L151 177 C151 190 142 200 130 200 L28 200 C16 200 6 190 6 177 L6 108 C6 95 16 86 28 86 Z" fill="#13161a"/>
+      <path d="M48 74 L108 74 L126 108 L30 108 Z" fill="url(#glass)"/>
+      <rect x="52" y="42" width="44" height="18" rx="8" fill="#f6dfaa"/>
+      <path d="M29 144 L101 144 L110 184 L18 184 Z" fill="#0b0d0e"/>
+      <path d="M130 90 L168 92 L186 116 L156 166 L116 160 L122 116 Z" fill="#171b1d"/>
+      <path d="M118 116 L141 114 L152 138 L130 166 L104 160 L109 129 Z" fill="#2d3033"/>
+      <path d="M35 118 H100" stroke="#b57d37" stroke-width="5" stroke-linecap="round"/>
+      <path d="M48 36 L72 8 L82 20 L58 46 Z" fill="#0d0e10"/>
+      <path d="M84 36 L108 8 L118 20 L94 46 Z" fill="#0d0e10"/>
+      <rect x="32" y="212" width="112" height="18" rx="9" fill="#0c0d0f"/>
+    </g>
+
+    <g transform="translate(215 214)">
+      <rect x="0" y="10" width="90" height="152" rx="22" fill="#121416"/>
+      <rect x="18" y="28" width="54" height="80" rx="18" fill="#1d2125" stroke="#d1a65d" stroke-width="4"/>
+      <rect x="27" y="44" width="36" height="44" rx="10" fill="url(#glass)"/>
+      <path d="M26 112 H64" stroke="#ce9d58" stroke-width="5" stroke-linecap="round"/>
+      <path d="M16 146 L40 120 L50 120 L74 146" fill="none" stroke="#d7b469" stroke-width="6" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <g fill="#d9c7bf" opacity="0.2">
+    <circle cx="1180" cy="270" r="3"/>
+    <circle cx="1210" cy="292" r="2.4"/>
+    <circle cx="1228" cy="322" r="2.2"/>
+    <circle cx="1254" cy="298" r="2.1"/>
+    <circle cx="1288" cy="286" r="2.4"/>
+    <circle cx="1320" cy="318" r="2.2"/>
+  </g>
+</svg>

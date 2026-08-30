@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Premium smoking shop hero with shisha, tobacco products and vape device">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7f1e7"/>
+      <stop offset="32%" stop-color="#eadfc9"/>
+      <stop offset="70%" stop-color="#d9cab0"/>
+      <stop offset="100%" stop-color="#c9b091"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f3e2b1"/>
+      <stop offset="35%" stop-color="#d8b566"/>
+      <stop offset="70%" stop-color="#b57a33"/>
+      <stop offset="100%" stop-color="#f0d892"/>
+    </linearGradient>
+    <linearGradient id="bronze" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f7deb2"/>
+      <stop offset="100%" stop-color="#b77b2a"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f7e5b6"/>
+      <stop offset="100%" stop-color="#cf9855"/>
+    </linearGradient>
+    <linearGradient id="charcoal" x1="0" x2="1">
+      <stop offset="0%" stop-color="#202326"/>
+      <stop offset="100%" stop-color="#0b0d0e"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="150%" height="170%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1a1a1a" flood-opacity="0.18"/>
+    </filter>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="150%">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+
+  <g opacity="0.72">
+    <ellipse cx="1090" cy="155" rx="170" ry="90" fill="#eed891" opacity="0.22"/>
+    <ellipse cx="1245" cy="170" rx="110" ry="62" fill="#f8e9ba" opacity="0.18"/>
+  </g>
+
+  <g opacity="0.8">
+    <path d="M0 724 L1600 724 L1600 900 L0 900 Z" fill="#151719"/>
+    <path d="M0 674 L92 674 L92 620 L176 620 L176 532 L284 532 L284 620 L400 620 L400 582 L500 582 L500 640 L606 640 L606 584 L708 584 L708 650 L804 650 L804 594 L892 594 L892 640 L1008 640 L1008 590 L1108 590 L1108 516 L1204 516 L1204 636 L1300 636 L1300 582 L1400 582 L1400 624 L1498 624 L1498 674 L1600 674 L1600 900 L0 900 Z" fill="#101214"/>
+    <g fill="#f0d394" opacity="0.85">
+      <rect x="1020" y="292" width="12" height="36"/>
+      <rect x="1048" y="260" width="12" height="68"/>
+      <rect x="1076" y="304" width="12" height="40"/>
+      <rect x="1186" y="306" width="12" height="34"/>
+      <rect x="1368" y="272" width="12" height="40"/>
+      <rect x="1420" y="248" width="12" height="60"/>
+    </g>
+  </g>
+
+  <g transform="translate(760 168)" filter="url(#shadow)">
+    <ellipse cx="225" cy="580" rx="360" ry="54" fill="#111315" opacity="0.24"/>
+
+    <g transform="translate(20 16)">
+      <path d="M190 215 L177 500 L334 500 L320 215 Z" fill="url(#charcoal)"/>
+      <path d="M160 188 L359 188 L392 220 L127 220 Z" fill="#202327"/>
+      <path d="M212 155 L309 155 L338 188 L183 188 Z" fill="url(#gold)"/>
+      <path d="M152 220 L420 220 L445 272 L128 272 Z" fill="#171a1d"/>
+      <path d="M172 272 L398 272 L420 318 L150 318 Z" fill="#121416"/>
+      <path d="M205 327 L297 327 C314 327 327 340 327 356 L327 452 C327 467 314 480 297 480 L205 480 C188 480 175 467 175 452 L175 356 C175 340 188 327 205 327 Z" fill="#0d0e10"/>
+      <path d="M241 142 L244 191 L281 191 L285 142 Z" fill="#d7b05c"/>
+      <path d="M160 178 L185 210 L212 202 L181 168 Z" fill="#d6aa62"/>
+      <path d="M338 178 L312 210 L287 202 L317 168 Z" fill="#d6aa62"/>
+      <path d="M169 320 C206 371 233 405 250 405 C269 405 296 370 334 320" fill="none" stroke="#f7eaad" stroke-width="7" stroke-linecap="round" opacity="0.88"/>
+      <path d="M172 172 Q251 112 328 172" fill="none" stroke="#f5d688" stroke-width="6" stroke-linecap="round" opacity="0.92"/>
+      <circle cx="250" cy="95" r="26" fill="#f8eac0"/>
+      <circle cx="250" cy="95" r="11" fill="#101214"/>
+      <path d="M200 484 C221 510 235 527 250 532 C265 527 280 510 300 484" fill="none" stroke="#393d3d" stroke-width="8"/>
+    </g>
+
+    <g transform="translate(15 154)">
+      <rect x="0" y="0" width="186" height="218" rx="16" fill="#111214"/>
+      <rect x="18" y="18" width="150" height="164" rx="12" fill="url(#bronze)"/>
+      <rect x="30" y="38" width="126" height="52" rx="8" fill="#14171a" opacity="0.7"/>
+      <text x="93" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#f9e7b2">AL SAQAR</text>
+      <rect x="34" y="102" width="118" height="56" rx="8" fill="#14171a"/>
+      <text x="93" y="136" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#edc97d">TOBACCO</text>
+      <rect x="20" y="186" width="146" height="12" rx="7" fill="#c59146"/>
+    </g>
+
+    <g transform="translate(500 170)" filter="url(#glow)">
+      <path d="M6 184 L148 184 L174 214 L0 214 Z" fill="#d7ae62" opacity="0.92"/>
+      <path d="M112 50 L112 184 L146 184 L146 50 Z" fill="#141518"/>
+      <path d="M28 42 L106 42 L140 86 L0 86 Z" fill="#121417"/>
+      <path d="M28 86 L128 86 C140 86 150 95 150 107 L150 178 C150 190 140 200 128 200 L28 200 C16 200 6 190 6 178 L6 107 C6 95 16 86 28 86 Z" fill="#141618"/>
+      <path d="M48 74 L108 74 L126 108 L30 108 Z" fill="url(#glass)"/>
+      <rect x="51" y="44" width="44" height="18" rx="8" fill="#f8e0a8"/>
+      <path d="M30 146 L98 146 L110 184 L20 184 Z" fill="#0b0d0f"/>
+      <path d="M130 90 L170 92 L186 116 L154 166 L118 160 L121 116 Z" fill="#141518"/>
+      <path d="M118 116 L142 114 L152 138 L130 166 L102 160 L108 129 Z" fill="#2c2f31"/>
+      <path d="M35 118 H100" stroke="#b78239" stroke-width="5" stroke-linecap="round"/>
+      <path d="M48 36 L71 8 L81 20 L58 46 Z" fill="#0c0d0e"/>
+      <path d="M85 36 L106 8 L116 20 L92 46 Z" fill="#0c0d0e"/>
+      <rect x="32" y="212" width="112" height="18" rx="9" fill="#0f1012"/>
+    </g>
+  </g>
+
+  <g opacity="0.38">
+    <circle cx="1038" cy="184" r="62" fill="#f7e9bf" opacity="0.45"/>
+    <circle cx="1458" cy="130" r="82" fill="#f7e9bf" opacity="0.25"/>
+  </g>
+</svg>

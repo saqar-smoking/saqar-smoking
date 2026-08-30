@@ -1,36 +1,260 @@
 import express from "express";
 import { createServer } from "http";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
-
-// AL SAQAR SMOKING SHOP — production static server.
-// This project is a static React SPA (WhatsApp-first ordering, no accounts,
-// no database). This server only exists as a convenience for hosts that run
-// Node instead of pure static hosting. For Vercel / Netlify / Cloudflare
-// Pages, you can deploy the `dist/public` folder directly and this file is
-// not required at all.
+import crypto from "crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer() {
+const DATA_FILE = process.env.CATALOG_DATA_FILE || path.resolve(__dirname, "..", "data", "catalog.json");
+const SESSION_SECRET_FILE = path.resolve(path.dirname(DATA_FILE), ".admin-session-secret");
+
+const COOKIE_NAME = "al_saqaar_admin_session";
+type CatalogProductRecord = {
+  id: string;
+  category: string;
+  name: string;
+  brand: string;
+  priceAED: number | null;
+  availability: string;
+  shortDescription: string;
+  detailedDescription: string;
+  specifications: string[];
+  keywords: string[];
+  variants?: { id: string; name: string; availability: string; image?: string }[];
+  image: string;
+  featured: boolean;
+  newestRank: number;
+  archived: boolean;
+};
+
+type CatalogData = {
+  products: CatalogProductRecord[];
+  metadata: { categories: string[]; brands: string[]; flavors: string[] };
+};
+
+const DEFAULT_CATALOG: CatalogData = {
+  products: [],
+  metadata: { categories: [], brands: [], flavors: [] }
+};
+
+const ensureDataFile = () => {
+  const dataDir = path.dirname(DATA_FILE);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(DEFAULT_CATALOG, null, 2), "utf8");
+  }
+};
+
+const readCatalog = (): CatalogData => {
+  ensureDataFile();
+  try {
+    const raw = fs.readFileSync(DATA_FILE, "utf8");
+    const parsed = JSON.parse(raw) as { products?: unknown[]; metadata?: { categories?: string[]; brands?: string[]; flavors?: string[] } };
+    if (!parsed || !Array.isArray(parsed.products)) {
+      return DEFAULT_CATALOG;
+    }
+    return { products: parsed.products as CatalogProductRecord[], metadata: { categories: parsed.metadata?.categories ?? DEFAULT_CATALOG.metadata.categories, brands: parsed.metadata?.brands ?? DEFAULT_CATALOG.metadata.brands, flavors: parsed.metadata?.flavors ?? DEFAULT_CATALOG.metadata.flavors } };
+  } catch {
+    return DEFAULT_CATALOG;
+  }
+};
+
+const writeCatalog = (catalog: CatalogData) => {
+  ensureDataFile();
+  fs.writeFileSync(DATA_FILE, JSON.stringify(catalog, null, 2), "utf8");
+};
+
+const VALID_CATEGORIES = new Set(["hookahs", "tobacco", "smokingDevices", "accessories", "electronicDevices", "charcoalMore"]);
+const VALID_AVAILABILITY = new Set(["on_request", "available", "out_of_stock"]);
+
+const validateProducts = (products: unknown[]) => {
+  const ids = new Set<string>();
+  const normalized = products.map((value, index) => {
+    if (!value || typeof value !== "object") throw new Error(`Product ${index + 1} is invalid`);
+    const product = value as Record<string, unknown>;
+    const id = typeof product.id === "string" && product.id.trim() ? product.id.trim() : `product-${crypto.randomUUID()}`;
+    if (ids.has(id)) throw new Error(`Duplicate product ID: ${id}`);
+    ids.add(id);
+
+    const name = typeof product.name === "string" ? product.name.trim() : "";
+    const category = typeof product.category === "string" ? product.category : "";
+    const brand = typeof product.brand === "string" ? product.brand.trim() : "";
+    const availability = typeof product.availability === "string" ? product.availability : "";
+    const priceAED = product.priceAED === null || product.priceAED === undefined || product.priceAED === "" ? null : Number(product.priceAED);
+    if (!name || name.length > 200) throw new Error(`Product ${index + 1} needs a name under 200 characters`);
+    if (!VALID_CATEGORIES.has(category)) throw new Error(`Product ${index + 1} has an invalid category`);
+    if (!VALID_AVAILABILITY.has(availability)) throw new Error(`Product ${index + 1} has an invalid availability`);
+    if (priceAED !== null && (!Number.isFinite(priceAED) || priceAED < 0 || priceAED > 100000000)) throw new Error(`Product ${index + 1} has an invalid price`);
+    const list = (key: string) => {
+      if (!Array.isArray(product[key]) || !product[key].every((item) => typeof item === "string")) throw new Error(`Product ${index + 1} has invalid ${key}`);
+      return product[key] as string[];
+    };
+    return {
+      ...product,
+      id,
+      category,
+      name,
+      brand,
+      priceAED,
+      availability,
+      shortDescription: typeof product.shortDescription === "string" ? product.shortDescription.trim() : "",
+      detailedDescription: typeof product.detailedDescription === "string" ? product.detailedDescription.trim() : "",
+      specifications: list("specifications"),
+      keywords: list("keywords"),
+      variants: Array.isArray(product.variants) ? product.variants.map((variant, variantIndex) => {
+        if (!variant || typeof variant !== "object") throw new Error(`Product ${index + 1} has invalid variant data`);
+        const item = variant as Record<string, unknown>;
+        const name = typeof item.name === "string" ? item.name.trim() : "";
+        const variantAvailability = typeof item.availability === "string" ? item.availability : "";
+        if (!name || !VALID_AVAILABILITY.has(variantAvailability)) throw new Error(`Product ${index + 1} has invalid variant ${variantIndex + 1}`);
+        return { id: typeof item.id === "string" && item.id.trim() ? item.id.trim() : `variant-${crypto.randomUUID()}`, name, availability: variantAvailability, image: typeof item.image === "string" && item.image ? item.image : undefined };
+      }) : [],
+      image: typeof product.image === "string" ? product.image : "/assets/placeholder.svg",
+      featured: Boolean(product.featured),
+      newestRank: Number.isFinite(Number(product.newestRank)) ? Number(product.newestRank) : 1,
+      archived: Boolean(product.archived),
+    };
+  });
+  return normalized as CatalogProductRecord[];
+};
+
+const getAdminConfig = () => {
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!username || !password) {
+    throw new Error("ADMIN_USERNAME and ADMIN_PASSWORD must be configured");
+  }
+  ensureDataFile();
+  const sessionSecret = process.env.ADMIN_SESSION_SECRET || (fs.existsSync(SESSION_SECRET_FILE)
+    ? fs.readFileSync(SESSION_SECRET_FILE, "utf8").trim()
+    : crypto.randomBytes(32).toString("hex"));
+  if (!process.env.ADMIN_SESSION_SECRET && !fs.existsSync(SESSION_SECRET_FILE)) {
+    fs.writeFileSync(SESSION_SECRET_FILE, sessionSecret, { encoding: "utf8", mode: 0o600 });
+  }
+  return { username, password, sessionSecret };
+};
+
+const getSessionHash = (sessionSecret: string, username: string, password: string) => crypto.createHmac("sha256", sessionSecret).update(`${username}:${password}`).digest("hex");
+
+export const createApp = () => {
   const app = express();
-  const server = createServer(app);
+  const adminConfig = getAdminConfig();
 
   const staticPath = path.resolve(__dirname, "public");
 
+  app.use(express.json({ limit: "2mb" }));
+  app.use((req, res, next) => {
+    res.setHeader("X-Frame-Options", "DENY");
+    next();
+  });
+
+  app.post("/api/admin/login", (req, res) => {
+    const username = String(req.body?.username ?? "");
+    const password = String(req.body?.password ?? "");
+    if (username !== adminConfig.username || password !== adminConfig.password) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const sessionToken = getSessionHash(adminConfig.sessionSecret, username, password);
+    res.cookie(COOKIE_NAME, sessionToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 8,
+    });
+
+    res.json({ ok: true, username });
+  });
+
+  app.post("/api/admin/logout", (_req, res) => {
+    res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+    res.json({ ok: true });
+  });
+
+  const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const cookieHeader = req.headers.cookie ?? "";
+    const cookies = Object.fromEntries(
+      cookieHeader.split(";").map((entry) => {
+        const index = entry.indexOf("=");
+        const key = index >= 0 ? entry.slice(0, index).trim() : entry.trim();
+        const value = index >= 0 ? decodeURIComponent(entry.slice(index + 1).trim()) : "";
+        return [key, value];
+      }).filter(([key]) => Boolean(key))
+    );
+
+    const token = cookies[COOKIE_NAME];
+    if (!token || token !== getSessionHash(adminConfig.sessionSecret, adminConfig.username, adminConfig.password)) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    next();
+  };
+
+  app.get("/api/catalog", (_req, res) => {
+    res.json(readCatalog());
+  });
+
+  app.get("/api/admin/catalog", requireAdmin, (_req, res) => {
+    res.json(readCatalog());
+  });
+
+  app.put("/api/admin/catalog", requireAdmin, (req, res) => {
+    const payload = req.body as { products?: CatalogProductRecord[]; metadata?: typeof DEFAULT_CATALOG.metadata };
+    if (!Array.isArray(payload.products)) {
+      res.status(400).json({ error: "Invalid catalog payload" });
+      return;
+    }
+
+    let products: CatalogProductRecord[];
+    try {
+      products = validateProducts(payload.products);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product data" });
+      return;
+    }
+
+    const catalog = {
+      products,
+      metadata: {
+        categories: Array.from(new Set(products.map((product) => product.category))).sort(),
+        brands: Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).sort(),
+        flavors: Array.from(new Set(products.flatMap((product) => product.keywords))).sort(),
+      },
+    };
+
+    writeCatalog(catalog);
+    res.json(catalog);
+  });
+
   app.use(express.static(staticPath, { maxAge: "1h" }));
 
-  // Client-side routing (wouter) - serve index.html for any non-file route.
+  app.get("/admin", requireAdmin, (_req, res) => {
+    res.sendFile(path.join(staticPath, "index.html"));
+  });
+
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
 
+  return app;
+};
+
+const startServer = () => {
+  const app = createApp();
+  const server = createServer(app);
   const port = Number(process.env.PORT) || 3000;
 
   server.listen(port, () => {
     console.log(`AL SAQAR server running on http://localhost:${port}/`);
   });
-}
+};
 
-startServer().catch(console.error);
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  startServer();
+}

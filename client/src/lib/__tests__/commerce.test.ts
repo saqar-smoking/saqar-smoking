@@ -1,16 +1,52 @@
 import { describe, expect, it } from "vitest";
-import { catalogProducts } from "../catalog";
+import { catalogProducts, CATEGORY_KEYS, fetchCatalogProducts, getCatalogSnapshot, syncCatalogProducts, type CatalogProduct } from "../catalog";
 import { commerceCopy } from "../translations";
-import { buildWhatsAppOrderMessage } from "../orderMessage";
+import { buildOrderWhatsAppMessage, buildWhatsAppOrderMessage } from "../orderMessage";
 import { addLine, getCartSummary, removeLine, setLineQuantity } from "../cart";
+
+const testProducts: CatalogProduct[] = CATEGORY_KEYS.map((category, index) => ({
+  id: `test-${index}`,
+  category,
+  name: `Test product ${index}`,
+  brand: "Test brand",
+  priceAED: null,
+  availability: "on_request",
+  shortDescription: "Test short description",
+  detailedDescription: "Test detailed description",
+  specifications: [],
+  keywords: ["test"],
+  image: "/assets/placeholder.svg",
+  featured: index === 0,
+  newestRank: CATEGORY_KEYS.length - index,
+  archived: false,
+}));
+
+syncCatalogProducts(testProducts);
 
 describe("commerce catalog", () => {
   it("contains the six requested categories", () => {
     expect(new Set(catalogProducts.map((product) => product.category))).toEqual(new Set(["hookahs", "tobacco", "smokingDevices", "accessories", "electronicDevices", "charcoalMore"]));
   });
 
+  it("keeps a shared catalog snapshot for storefront and admin updates", () => {
+    expect(catalogProducts.length).toBeGreaterThan(0);
+    const snapshot = getCatalogSnapshot();
+    expect(snapshot.products.length).toBe(catalogProducts.length);
+    expect(snapshot.metadata.categories).toContain("hookahs");
+  });
+
   it("does not invent an AED price for placeholder products", () => {
     expect(catalogProducts.every((product) => product.priceAED === null)).toBe(true);
+  });
+
+  it("hydrates newly created products for the Shop data loader", async () => {
+    const newProduct = { ...testProducts[0]!, id: "new-shop-product", name: "New shop product" };
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ products: [...testProducts, newProduct] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const loaded = await fetchCatalogProducts();
+    globalThis.fetch = originalFetch;
+    expect(loaded.some((product) => product.id === newProduct.id)).toBe(true);
+    syncCatalogProducts(testProducts);
   });
 });
 
@@ -47,6 +83,14 @@ describe("WhatsApp order message", () => {
     expect(message).toContain(`${product.name} x 2 — AED 120.00`);
     expect(message).toContain("Total: AED 240.00");
     expect(message).toContain("Notes: Call before delivery");
+  });
+
+  it("creates a direct order message for the dedicated order page", () => {
+    const product = { ...catalogProducts[0]!, priceAED: 180 };
+    const message = buildOrderWhatsAppMessage(commerceCopy.en, [{ product, quantity: 2 }], 360);
+    expect(message).toContain("Place Your Order");
+    expect(message).toContain(`${product.name} x 2`);
+    expect(message).toContain("Total: AED 360.00");
   });
 
   it("labels unknown prices for WhatsApp confirmation instead of fabricating totals", () => {

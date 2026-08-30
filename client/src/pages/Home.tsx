@@ -212,7 +212,7 @@ const categoryNames: Record<Language, Record<(typeof categories)[number]["key"],
 function BrandMark({ inverse = false }: { inverse?: boolean }) {
   return (
     <span className={`brand-mark ${inverse ? "brand-mark--inverse" : ""}`} aria-hidden="true">
-      <img src="/assets/logo.svg" alt="" />
+      <img src={inverse ? "/assets/logo-light.svg" : "/assets/logo.svg"} alt="" />
       <span className="brand-mark__fallback">⌒</span>
     </span>
   );
@@ -236,7 +236,6 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [ageStatus, setAgeStatus] = useState<"checking" | "pending" | "approved">("checking");
   const t = copy[language];
   const isRtl = language !== "en";
   const languageOptions = useMemo(() => [
@@ -246,7 +245,6 @@ export default function Home() {
   ], []);
 
   useEffect(() => {
-    setAgeStatus(localStorage.getItem("al-saqaar-age-approved") === "true" ? "approved" : "pending");
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -266,15 +264,6 @@ export default function Home() {
   const closeMenuAndScroll = (id: string) => {
     setMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const approveAge = () => {
-    localStorage.setItem("al-saqaar-age-approved", "true");
-    setAgeStatus("approved");
-  };
-
-  const leaveSite = () => {
-    window.location.assign("https://www.google.com/");
   };
 
   const openCategory = (category: string) => `/shop?category=${category}`;
@@ -337,7 +326,12 @@ export default function Home() {
 
       <main>
         <section className="hero" id="home">
-          <div className="hero__art" aria-hidden="true" />
+          <div className="hero__scene" aria-hidden="true">
+            <span className="hero__scene__smoke hero__scene__smoke--one" />
+            <span className="hero__scene__smoke hero__scene__smoke--two" />
+            <span className="hero__scene__hookah" />
+            <span className="hero__scene__vape" />
+          </div>
           <div className="page-frame hero__content">
             <div className="hero__copy">
               <p className="eyebrow"><span className="eyebrow__arc" /> {t.heroEyebrow}</p>
@@ -419,13 +413,6 @@ export default function Home() {
       </footer>
 
       <div className="mobile-float-actions" aria-label="Quick actions"><a href={WHATSAPP_URL} target="_blank" rel="noreferrer"><MessageCircle size={17} /> {t.whatsapp}</a><a href={MAPS_URL} target="_blank" rel="noreferrer"><MapPin size={17} /> {t.directions}</a></div>
-
-      {ageStatus !== "approved" && (
-        <div className={`age-gate ${ageStatus === "checking" ? "age-gate--checking" : ""}`} role="dialog" aria-modal="true" aria-labelledby="age-gate-title">
-          <div className="age-gate__backdrop" />
-          <div className="age-gate__panel"><BrandMark /><p className="eyebrow"><span className="eyebrow__arc" /> {t.ageEyebrow}</p><h2 id="age-gate-title">{t.ageTitle}</h2><p className="age-gate__text">{t.ageText}</p><div className="age-gate__actions"><button className="button button--dark" onClick={approveAge}>{t.accept}<ArrowRight size={17} /></button><button className="age-gate__exit" onClick={leaveSite}>{t.exit}</button></div><p className="age-gate__note">{t.ageNote}</p></div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Premium luxury hookah and vape scene in Dubai nightlife">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#020405"/>
+      <stop offset="26%" stop-color="#0a0d12"/>
+      <stop offset="58%" stop-color="#121416"/>
+      <stop offset="100%" stop-color="#06080b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f9edc1"/>
+      <stop offset="26%" stop-color="#e2c67a"/>
+      <stop offset="60%" stop-color="#b6803d"/>
+      <stop offset="100%" stop-color="#f4d891"/>
+    </linearGradient>
+    <linearGradient id="blackMetal" x1="0" x2="1">
+      <stop offset="0%" stop-color="#1a1d20"/>
+      <stop offset="50%" stop-color="#07090c"/>
+      <stop offset="100%" stop-color="#171a1e"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f8e8bc"/>
+      <stop offset="100%" stop-color="#c48745"/>
+    </linearGradient>
+    <linearGradient id="pack" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f4dca4"/>
+      <stop offset="100%" stop-color="#c3873d"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="160%" height="190%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.46"/>
+    </filter>
+    <filter id="smoke" x="-20%" y="-20%" width="170%" height="200%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <g opacity="0.95">
+    <path d="M0 760 L1600 760 L1600 900 L0 900 Z" fill="#050608"/>
+    <path d="M0 682 L125 682 L125 622 L212 622 L212 538 L305 538 L305 621 L396 621 L396 585 L506 585 L506 654 L622 654 L622 594 L718 594 L718 660 L814 660 L814 602 L912 602 L912 660 L1006 660 L1006 610 L1108 610 L1108 518 L1195 518 L1195 640 L1292 640 L1292 584 L1400 584 L1400 618 L1506 618 L1506 660 L1600 660 L1600 900 L0 900 Z" fill="#101315"/>
+    <g fill="#f0ce86" opacity="0.8">
+      <rect x="1030" y="292" width="12" height="42"/>
+      <rect x="1063" y="258" width="12" height="70"/>
+      <rect x="1098" y="308" width="12" height="40"/>
+      <rect x="1188" y="306" width="12" height="38"/>
+      <rect x="1368" y="272" width="12" height="42"/>
+      <rect x="1430" y="246" width="12" height="62"/>
+    </g>
+  </g>
+
+  <g opacity="0.88">
+    <rect x="450" y="310" width="8" height="163" fill="#d4a868" opacity="0.4"/>
+    <rect x="486" y="290" width="10" height="182" fill="#d4a868" opacity="0.38"/>
+    <rect x="520" y="322" width="8" height="150" fill="#d4a868" opacity="0.42"/>
+    <rect x="570" y="270" width="12" height="204" fill="#d4a868" opacity="0.22"/>
+    <rect x="612" y="332" width="8" height="148" fill="#d4a868" opacity="0.24"/>
+    <rect x="662" y="280" width="14" height="196" fill="#d4a868" opacity="0.22"/>
+    <rect x="704" y="312" width="10" height="164" fill="#d4a868" opacity="0.2"/>
+    <rect x="768" y="272" width="16" height="202" fill="#d4a868" opacity="0.18"/>
+  </g>
+
+  <g opacity="0.92" filter="url(#smoke)">
+    <path d="M930 216 C975 188 1024 188 1053 230 C1071 258 1066 290 1030 306 C992 322 949 309 924 277 C908 258 909 236 930 216 Z" fill="#d9d3cb" opacity="0.8"/>
+    <path d="M1008 152 C1062 116 1126 122 1167 167 C1196 198 1195 242 1152 261 C1108 281 1054 267 1020 230 C991 198 983 176 1008 152 Z" fill="#d7d0c9" opacity="0.74"/>
+    <path d="M878 260 C920 230 956 230 986 256 C1005 274 1005 312 971 328 C930 346 885 336 864 306 C856 290 857 274 878 260 Z" fill="#d9d1c8" opacity="0.68"/>
+  </g>
+
+  <g transform="translate(760 145)" filter="url(#softShadow)">
+    <ellipse cx="230" cy="620" rx="380" ry="58" fill="#040607" opacity="0.48"/>
+
+    <g transform="translate(18 8)">
+      <path d="M182 214 L166 518 L342 518 L326 214 Z" fill="url(#blackMetal)"/>
+      <path d="M147 192 L360 192 L396 224 L112 224 Z" fill="#1a1e20"/>
+      <path d="M208 146 L306 146 L342 192 L176 192 Z" fill="url(#gold)"/>
+      <path d="M148 224 L428 224 L448 284 L128 284 Z" fill="#171a1d"/>
+      <path d="M170 284 L402 284 L424 324 L150 324 Z" fill="#121417"/>
+      <path d="M208 334 L296 334 C314 334 327 347 327 364 L327 458 C327 474 314 487 296 487 L208 487 C190 487 177 474 177 458 L177 364 C177 347 190 334 208 334 Z" fill="#090b0d"/>
+      <path d="M242 148 L246 198 L280 198 L285 148 Z" fill="#d7ad68"/>
+      <path d="M162 182 L188 214 L210 206 L182 170 Z" fill="#d4a75b"/>
+      <path d="M337 182 L312 214 L289 206 L318 170 Z" fill="#d4a75b"/>
+      <path d="M170 336 C210 382 236 410 250 410 C268 410 296 374 332 336" fill="none" stroke="#f9edc6" stroke-width="7" stroke-linecap="round" opacity="0.95"/>
+      <path d="M170 176 Q250 110 330 176" fill="none" stroke="#f7d892" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+      <circle cx="250" cy="110" r="26" fill="#f9ebbf"/>
+      <circle cx="250" cy="110" r="11" fill="#12171a"/>
+      <path d="M196 490 C218 516 236 532 250 538 C265 532 282 516 304 490" fill="none" stroke="#3b4044" stroke-width="8" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(16 160)">
+      <rect x="0" y="0" width="186" height="216" rx="16" fill="#101214"/>
+      <rect x="18" y="18" width="150" height="162" rx="12" fill="url(#pack)"/>
+      <rect x="30" y="40" width="126" height="52" rx="8" fill="#14171a" opacity="0.72"/>
+      <text x="93" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#f9e4b5">AL SAQAR</text>
+      <rect x="36" y="102" width="116" height="56" rx="8" fill="#14171a"/>
+      <text x="94" y="138" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#edcb81">TOBACCO</text>
+      <rect x="20" y="184" width="146" height="12" rx="7" fill="#c78f42"/>
+    </g>
+
+    <g transform="translate(500 182)">
+      <path d="M0 184 L154 184 L180 212 L0 212 Z" fill="#d4a963" opacity="0.94"/>
+      <path d="M112 36 L112 184 L146 184 L146 36 Z" fill="#15181b"/>
+      <path d="M28 38 L108 38 L142 86 L0 86 Z" fill="#121417"/>
+      <path d="M28 86 L130 86 C142 86 151 95 151 108 L151 177 C151 190 142 200 130 200 L28 200 C16 200 6 190 6 177 L6 108 C6 95 16 86 28 86 Z" fill="#13171a"/>
+      <path d="M48 74 L108 74 L126 108 L30 108 Z" fill="url(#glass)"/>
+      <rect x="52" y="42" width="44" height="18" rx="8" fill="#f6dfaa"/>
+      <path d="M29 144 L101 144 L110 184 L18 184 Z" fill="#0b0d0e"/>
+      <path d="M130 90 L168 92 L186 116 L156 166 L116 160 L122 116 Z" fill="#171b1d"/>
+      <path d="M118 116 L141 114 L152 138 L130 166 L104 160 L109 129 Z" fill="#2d3237"/>
+      <path d="M35 118 H100" stroke="#b57d37" stroke-width="5" stroke-linecap="round"/>
+      <path d="M48 36 L72 8 L82 20 L58 46 Z" fill="#0d0e10"/>
+      <path d="M84 36 L108 8 L118 20 L94 46 Z" fill="#0d0e10"/>
+      <rect x="32" y="212" width="112" height="18" rx="9" fill="#0c0d0f"/>
+    </g>
+
+    <g transform="translate(216 214)">
+      <rect x="0" y="10" width="90" height="152" rx="22" fill="#121416"/>
+      <rect x="18" y="28" width="54" height="80" rx="18" fill="#1d2125" stroke="#d1a65d" stroke-width="4"/>
+      <rect x="27" y="44" width="36" height="44" rx="10" fill="url(#glass)"/>
+      <path d="M26 112 H64" stroke="#ce9d58" stroke-width="5" stroke-linecap="round"/>
+      <path d="M16 146 L40 120 L50 120 L74 146" fill="none" stroke="#d7b469" stroke-width="6" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <g opacity="0.18">
+    <circle cx="1180" cy="250" r="3" fill="#f5dfaf"/>
+    <circle cx="1208" cy="286" r="2.8" fill="#f5dfaf"/>
+    <circle cx="1240" cy="310" r="2.4" fill="#f5dfaf"/>
+    <circle cx="1268" cy="298" r="2.2" fill="#f5dfaf"/>
+    <circle cx="1298" cy="282" r="2.7" fill="#f5dfaf"/>
+    <circle cx="1324" cy="318" r="2.2" fill="#f5dfaf"/>
+  </g>
+</svg>

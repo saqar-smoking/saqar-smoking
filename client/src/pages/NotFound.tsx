@@ -1,13 +1,12 @@
 import { Home } from "lucide-react";
 import { Link } from "wouter";
-import { AgeGateGuard, CommerceHeader } from "@/components/CommerceShell";
+import { CommerceHeader } from "@/components/CommerceShell";
 import { useCommerce } from "@/contexts/CommerceContext";
 
 export default function NotFound() {
   const { t } = useCommerce();
   return (
-    <AgeGateGuard>
-      <div className="commerce-shell">
+    <div className="commerce-shell">
         <CommerceHeader />
         <main className="commerce-main">
           <div className="commerce-empty-page">
@@ -19,6 +18,5 @@ export default function NotFound() {
           </div>
         </main>
       </div>
-    </AgeGateGuard>
   );
 }

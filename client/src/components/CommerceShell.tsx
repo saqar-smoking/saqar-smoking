@@ -5,6 +5,7 @@ import { useCommerce } from "@/contexts/CommerceContext";
 
 export const LOGO_URL = "/assets/logo.svg";
 export const WHATSAPP_URL = "https://wa.me/971526179396";
+export const INSTAGRAM_URL = "https://www.instagram.com/alsaqar_smoking/";
 export const PHONE_URL = "tel:+971526179396";
 
 export function Brand({ inverse = false }: { inverse?: boolean }) {
