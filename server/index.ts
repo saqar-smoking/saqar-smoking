@@ -10,9 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DATA_FILE = process.env.CATALOG_DATA_FILE || path.resolve(__dirname, "..", "data", "catalog.json");
-const SESSION_SECRET_FILE = path.resolve(path.dirname(DATA_FILE), ".admin-session-secret");
 
-const COOKIE_NAME = "al_saqaar_admin_session";
 type CatalogProductRecord = {
   id: string;
   category: string;
@@ -155,43 +153,9 @@ const validateProducts = (products: unknown[]) => {
   return normalized as CatalogProductRecord[];
 };
 
-const getSessionSecret = () => {
-  const envSecret = process.env.ADMIN_SESSION_SECRET?.trim();
-  if (envSecret) return envSecret;
-  
-  if (fs.existsSync(SESSION_SECRET_FILE)) {
-    return fs.readFileSync(SESSION_SECRET_FILE, "utf8").trim();
-  }
-  
-  const generated = crypto.randomBytes(32).toString("hex");
-  fs.writeFileSync(SESSION_SECRET_FILE, generated, { encoding: "utf8", mode: 0o600 });
-  return generated;
-};
-
-const getAdminCredentials = () => {
-  // Production credentials - hardcoded as fallback, can be overridden by env vars
-  const defaultUsername = "saqar_admin";
-  const defaultPassword = "Admin_03C1CCDE6759C3D906B71621!Sq2026";
-  
-  // Try environment variables first
-  const envUsername = process.env.ADMIN_USERNAME?.trim();
-  const envPassword = process.env.ADMIN_PASSWORD?.trim();
-  
-  // Use env vars if both are set and non-empty, otherwise use defaults
-  if (envUsername && envPassword) {
-    return { username: envUsername, password: envPassword };
-  }
-  
-  // Fallback to hardcoded production credentials
-  return { username: defaultUsername, password: defaultPassword };
-};
-
-const getSessionHash = (sessionSecret: string, username: string, password: string) => crypto.createHmac("sha256", sessionSecret).update(`${username}:${password}`).digest("hex");
-
 export const createApp = () => {
   const app = express();
   ensureDataFile();
-  const sessionSecret = getSessionSecret();
 
   const staticPath = path.resolve(__dirname, "public");
 
@@ -201,62 +165,8 @@ export const createApp = () => {
     next();
   });
 
-  app.post("/api/admin/login", (req, res) => {
-    const submittedUsername = String(req.body?.username ?? "").trim();
-    const submittedPassword = String(req.body?.password ?? "").trim();
-    
-    // Read credentials fresh on every request
-    const { username: expectedUsername, password: expectedPassword } = getAdminCredentials();
-    
-    // Validate credentials
-    if (submittedUsername !== expectedUsername || submittedPassword !== expectedPassword) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
-
-    // Create session token and set cookie
-    const sessionToken = getSessionHash(sessionSecret, submittedUsername, submittedPassword);
-    res.cookie(COOKIE_NAME, sessionToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 1000 * 60 * 60 * 8,
-    });
-
-    // Send success response
-    res.json({ ok: true, username: submittedUsername });
-  });
-
-  app.post("/api/admin/logout", (_req, res) => {
-    res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
-    res.json({ ok: true });
-  });
-
-  const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // Temporary: Allow bypassing authentication if ADMIN_AUTH_DISABLED is set to true
-    const authDisabled = process.env.ADMIN_AUTH_DISABLED === "true";
-    if (authDisabled) {
-      console.log("[AUTH] Bypassing authentication - ADMIN_AUTH_DISABLED is set to true");
-      next();
-      return;
-    }
-
-    const cookieHeader = req.headers.cookie ?? "";
-    const cookies = Object.fromEntries(
-      cookieHeader.split(";").map((entry) => {
-        const index = entry.indexOf("=");
-        const key = index >= 0 ? entry.slice(0, index).trim() : entry.trim();
-        const value = index >= 0 ? decodeURIComponent(entry.slice(index + 1).trim()) : "";
-        return [key, value];
-      }).filter(([key]) => Boolean(key))
-    );
-
-    const token = cookies[COOKIE_NAME];
-    const { username, password } = getAdminCredentials();
-    if (!token || token !== getSessionHash(sessionSecret, username, password)) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
+  // Admin authentication has been removed; all admin routes are open.
+  const requireAdmin = (_req: express.Request, _res: express.Response, next: express.NextFunction) => {
     next();
   };
 

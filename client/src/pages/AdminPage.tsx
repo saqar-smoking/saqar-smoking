@@ -27,44 +27,21 @@ const parseVariants = (value: string): CatalogVariant[] => value.split("\n").fla
 });
 const formatVariants = (variants: CatalogVariant[] = []) => variants.map((variant) => [variant.name, variant.availability, variant.image ?? ""].join(" | ")).join("\n");
 
+// Admin auth has been removed; the dashboard is reachable directly at /admin.
 export default function AdminPage() {
-  const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [draft, setDraft] = useState<CatalogProduct>(emptyProduct());
 
   const catalogSummary = useMemo(() => getCatalogSnapshot(), [products]);
 
-  // Check if admin auth is disabled on the server
-  const checkAuthStatus = async () => {
-    try {
-      const response = await fetch("/api/admin/catalog", { credentials: "same-origin" });
-      if (response.ok) {
-        // Auth is bypassed or user has valid session
-        return true;
-      } else if (response.status === 401) {
-        // Auth is required
-        return false;
-      }
-    } catch (error) {
-      console.error("Auth status check failed:", error);
-    }
-    return false;
-  };
-
   const loadCatalog = async () => {
     setLoading(true);
     setNotice("");
     try {
       const response = await fetch("/api/admin/catalog", { credentials: "same-origin" });
-      if (response.status === 401) {
-        setAuthenticated(false);
-        return;
-      }
 
       if (!response.ok) {
         throw new Error("Unable to load catalog");
@@ -78,33 +55,17 @@ export default function AdminPage() {
         setSelectedId(nextProducts[0].id);
         setDraft(nextProducts[0]);
       }
-      setAuthenticated(true);
     } catch (error) {
       console.error(error);
-      if (authenticated) {
-        setNotice("Catalog could not be loaded.");
-      }
+      setNotice("Catalog could not be loaded.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // On mount, check if auth is disabled or user has a valid session
-    const initAuth = async () => {
-      const isAuthed = await checkAuthStatus();
-      if (isAuthed) {
-        setAuthenticated(true);
-      }
-    };
-    void initAuth();
+    void loadCatalog();
   }, []);
-
-  useEffect(() => {
-    if (authenticated) {
-      void loadCatalog();
-    }
-  }, [authenticated]);
 
   const saveCatalog = async (nextProducts: CatalogProduct[]) => {
     const payload = {
@@ -137,59 +98,6 @@ export default function AdminPage() {
       setDraft(match);
     }
     return refreshedProducts;
-  };
-
-  const login = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-    setNotice("");
-
-    try {
-      console.log("[LOGIN_CLIENT] Submitting credentials:", { 
-        username: username, 
-        usernameLength: username.length,
-        passwordLength: password.length 
-      });
-
-      const response = await fetch("/api/admin/login", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      console.log("[LOGIN_CLIENT] Response status:", response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json() as any;
-        console.log("[LOGIN_CLIENT] Error response:", errorData);
-        setNotice("Login failed. Check the owner credentials.");
-        setLoading(false);
-        return;
-      }
-
-      console.log("[LOGIN_CLIENT] Login successful, loading catalog...");
-      setAuthenticated(true);
-      
-      try {
-        await loadCatalog();
-      } catch (catalogError) {
-        console.error("[LOGIN_CLIENT] Catalog load failed:", catalogError);
-        setNotice("Login successful but catalog could not be loaded.");
-        setLoading(false);
-        return;
-      }
-    } catch (error) {
-      console.error("[LOGIN_CLIENT] Login request failed:", error);
-      setNotice("Login request failed. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    await fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" });
-    setAuthenticated(false);
-    setNotice("Admin session ended.");
   };
 
   const updateDraft = <K extends keyof CatalogProduct>(key: K, value: CatalogProduct[K]) => {
@@ -266,31 +174,6 @@ export default function AdminPage() {
     reader.readAsDataURL(file);
   };
 
-  if (!authenticated) {
-    return (
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#f4efe7", color: "#211d18" }}>
-        <div style={{ width: 420, background: "#fffaf2", border: "1px solid #d9c9a5", borderRadius: 18, padding: 32, boxShadow: "0 20px 40px rgba(17,11,8,0.1)" }}>
-          <p style={{ letterSpacing: 3, textTransform: "uppercase", fontSize: 12, opacity: 0.8 }}>Private admin</p>
-          <h1 style={{ margin: "8px 0 20px", fontSize: 32 }}>Owner login</h1>
-          <form onSubmit={login} style={{ display: "grid", gap: 16 }}>
-            <label style={{ display: "grid", gap: 8 }}>
-              <span>Username</span>
-              <input value={username} onChange={(event) => setUsername(event.target.value)} style={{ padding: 12, borderRadius: 10, border: "1px solid #d2bf9c" }} />
-            </label>
-            <label style={{ display: "grid", gap: 8 }}>
-              <span>Password</span>
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} style={{ padding: 12, borderRadius: 10, border: "1px solid #d2bf9c" }} />
-            </label>
-            <button type="submit" disabled={loading} style={{ padding: "12px 16px", borderRadius: 10, background: "#1d1a18", color: "#f9f2ea", cursor: "pointer" }}>
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
-            {notice ? <p style={{ color: "#9b3228" }}>{notice}</p> : null}
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ minHeight: "100vh", background: "#f8f2eb", color: "#1f1c1a", padding: 32 }}>
       <div style={{ maxWidth: 1380, margin: "0 auto" }}>
@@ -301,7 +184,6 @@ export default function AdminPage() {
           </div>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <span style={{ background: "#efe2cb", padding: "8px 12px", borderRadius: 999, fontWeight: 600 }}>{catalogSummary.products.length} live products</span>
-            <button onClick={logout} style={{ background: "#1c1917", color: "#f7f0e7", border: "none", borderRadius: 10, padding: "10px 14px", cursor: "pointer" }}>Log out</button>
           </div>
         </div>
 
