@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
+import { sql } from "@vercel/postgres";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,7 +51,7 @@ const ensureDataFile = () => {
   }
 };
 
-const readCatalog = (): CatalogData => {
+const readCatalogFromDisk = (): CatalogData => {
   ensureDataFile();
   try {
     const raw = fs.readFileSync(DATA_FILE, "utf8");
@@ -64,9 +65,40 @@ const readCatalog = (): CatalogData => {
   }
 };
 
-const writeCatalog = (catalog: CatalogData) => {
+const writeCatalogToDisk = (catalog: CatalogData) => {
   ensureDataFile();
   fs.writeFileSync(DATA_FILE, JSON.stringify(catalog, null, 2), "utf8");
+};
+
+const readCatalog = async (): Promise<CatalogData> => {
+  if (process.env.POSTGRES_URL) {
+    try {
+      await sql`CREATE TABLE IF NOT EXISTS catalog_store (key TEXT PRIMARY KEY, value JSONB NOT NULL);`;
+      const result = await sql<{ value: CatalogData }>`SELECT value FROM catalog_store WHERE key = 'catalog';`;
+      if (result.rows[0]?.value) {
+        const catalog = result.rows[0].value as CatalogData;
+        if (Array.isArray(catalog.products)) {
+          return catalog;
+        }
+      }
+    } catch (error) {
+      console.warn("Falling back to disk catalog storage because Postgres is unavailable:", error);
+    }
+  }
+  return readCatalogFromDisk();
+};
+
+const writeCatalog = async (catalog: CatalogData) => {
+  if (process.env.POSTGRES_URL) {
+    try {
+      await sql`CREATE TABLE IF NOT EXISTS catalog_store (key TEXT PRIMARY KEY, value JSONB NOT NULL);`;
+      await sql`INSERT INTO catalog_store (key, value) VALUES ('catalog', ${JSON.stringify(catalog)}::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;`;
+      return;
+    } catch (error) {
+      console.warn("Postgres catalog write failed; falling back to disk storage:", error);
+    }
+  }
+  writeCatalogToDisk(catalog);
 };
 
 const VALID_CATEGORIES = new Set(["hookahs", "tobacco", "smokingDevices", "accessories", "electronicDevices", "charcoalMore"]);
@@ -196,15 +228,17 @@ export const createApp = () => {
     next();
   };
 
-  app.get("/api/catalog", (_req, res) => {
-    res.json(readCatalog());
+  app.get("/api/catalog", async (_req, res) => {
+    const catalog = await readCatalog();
+    res.json(catalog);
   });
 
-  app.get("/api/admin/catalog", requireAdmin, (_req, res) => {
-    res.json(readCatalog());
+  app.get("/api/admin/catalog", requireAdmin, async (_req, res) => {
+    const catalog = await readCatalog();
+    res.json(catalog);
   });
 
-  app.put("/api/admin/catalog", requireAdmin, (req, res) => {
+  app.put("/api/admin/catalog", requireAdmin, async (req, res) => {
     const payload = req.body as { products?: CatalogProductRecord[]; metadata?: typeof DEFAULT_CATALOG.metadata };
     if (!Array.isArray(payload.products)) {
       res.status(400).json({ error: "Invalid catalog payload" });
@@ -228,7 +262,7 @@ export const createApp = () => {
       },
     };
 
-    writeCatalog(catalog);
+    await writeCatalog(catalog);
     res.json(catalog);
   });
 
