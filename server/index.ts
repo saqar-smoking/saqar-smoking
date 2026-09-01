@@ -170,9 +170,9 @@ const getSessionSecret = () => {
 
 const getAdminCredentials = () => {
   // Read fresh from environment on every call to support dynamic env var updates
-  // Fallback to temporary credentials if env vars not set
-  const username = process.env.ADMIN_USERNAME?.trim() || "admin";
-  const password = process.env.ADMIN_PASSWORD?.trim() || "SaqarAdmin@2026#91";
+  // Fallback to production credentials if env vars not set
+  const username = process.env.ADMIN_USERNAME?.trim() || "saqar_admin";
+  const password = process.env.ADMIN_PASSWORD?.trim() || "Admin_03C1CCDE6759C3D906B71621!Sq2026";
   return { username, password };
 };
 
