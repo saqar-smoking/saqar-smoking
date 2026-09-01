@@ -116,31 +116,46 @@ export default function AdminPage() {
     setLoading(true);
     setNotice("");
 
-    console.log("[LOGIN_CLIENT] Submitting credentials:", { 
-      username: username, 
-      usernameLength: username.length,
-      passwordLength: password.length 
-    });
+    try {
+      console.log("[LOGIN_CLIENT] Submitting credentials:", { 
+        username: username, 
+        usernameLength: username.length,
+        passwordLength: password.length 
+      });
 
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    console.log("[LOGIN_CLIENT] Response status:", response.status);
-    
-    if (!response.ok) {
-      const errorData = await response.json() as any;
-      console.log("[LOGIN_CLIENT] Error response:", errorData);
-      setNotice("Login failed. Check the owner credentials.");
+      console.log("[LOGIN_CLIENT] Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json() as any;
+        console.log("[LOGIN_CLIENT] Error response:", errorData);
+        setNotice("Login failed. Check the owner credentials.");
+        setLoading(false);
+        return;
+      }
+
+      console.log("[LOGIN_CLIENT] Login successful, loading catalog...");
+      setAuthenticated(true);
+      
+      try {
+        await loadCatalog();
+      } catch (catalogError) {
+        console.error("[LOGIN_CLIENT] Catalog load failed:", catalogError);
+        setNotice("Login successful but catalog could not be loaded.");
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("[LOGIN_CLIENT] Login request failed:", error);
+      setNotice("Login request failed. Please try again.");
       setLoading(false);
-      return;
     }
-
-    setAuthenticated(true);
-    await loadCatalog();
   };
 
   const logout = async () => {
