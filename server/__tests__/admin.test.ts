@@ -193,4 +193,28 @@ describe("admin catalog API", () => {
     expect(typeof payload.error).toBe("string");
     expect(payload.error).toMatch(/too large/i);
   });
+
+  it("rejects an inline base64 image that exceeds the size guard with a clear message", async () => {
+    const read = await fetch(`${baseUrl}/api/admin/catalog`);
+    const original = await read.json() as { products: CatalogProduct[] };
+    // Under the 4MB body limit, but over the per-image inline-size guard (2,000,000 chars).
+    const tooLargeInlineImage = `data:image/png;base64,${"A".repeat(2_500_000)}`;
+    const product = { ...original.products[0], image: tooLargeInlineImage };
+
+    const response = await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: [product] }),
+    });
+    expect(response.status).toBe(400);
+    const payload = await response.json() as { error?: string };
+    expect(payload.error).toMatch(/too large.*hosted URL/i);
+
+    // restore the original catalog for isolation
+    await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: original.products }),
+    });
+  });
 });

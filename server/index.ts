@@ -6,6 +6,7 @@ import os from "os";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
 import { sql } from "@vercel/postgres";
+import { put } from "@vercel/blob";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -121,6 +122,18 @@ const writeCatalog = async (catalog: CatalogData) => {
 
 const VALID_CATEGORIES_SET = new Set(VALID_CATEGORIES);
 const VALID_AVAILABILITY = new Set(["on_request", "available", "out_of_stock"]);
+// Uploaded images should go through /api/admin/upload-image and be stored as hosted
+// URLs. This cap only guards against someone pasting an oversized base64 string directly;
+// existing small embedded images (a few hundred KB) stay well under it.
+const MAX_INLINE_IMAGE_CHARS = 2_000_000;
+
+const validateImage = (value: unknown, label: string) => {
+  const image = typeof value === "string" && value ? value : "/assets/placeholder.svg";
+  if (image.length > MAX_INLINE_IMAGE_CHARS) {
+    throw new Error(`${label} image is too large; upload it first to get a hosted URL`);
+  }
+  return image;
+};
 
 const validateProducts = (products: unknown[]) => {
   const ids = new Set<string>();
@@ -162,9 +175,11 @@ const validateProducts = (products: unknown[]) => {
         const name = typeof item.name === "string" ? item.name.trim() : "";
         const variantAvailability = typeof item.availability === "string" ? item.availability : "";
         if (!name || !VALID_AVAILABILITY.has(variantAvailability)) throw new Error(`Product ${index + 1} has invalid variant ${variantIndex + 1}`);
-        return { id: typeof item.id === "string" && item.id.trim() ? item.id.trim() : `variant-${crypto.randomUUID()}`, name, availability: variantAvailability, image: typeof item.image === "string" && item.image ? item.image : undefined };
+        const variantImage = typeof item.image === "string" && item.image ? item.image : undefined;
+        if (variantImage && variantImage.length > MAX_INLINE_IMAGE_CHARS) throw new Error(`Product ${index + 1} has a variant image that is too large; upload it first to get a hosted URL`);
+        return { id: typeof item.id === "string" && item.id.trim() ? item.id.trim() : `variant-${crypto.randomUUID()}`, name, availability: variantAvailability, image: variantImage };
       }) : [],
-      image: typeof product.image === "string" ? product.image : "/assets/placeholder.svg",
+      image: validateImage(product.image, `Product ${index + 1}`),
       featured: Boolean(product.featured),
       newestRank: Number.isFinite(Number(product.newestRank)) ? Number(product.newestRank) : 1,
       archived: Boolean(product.archived),
@@ -252,6 +267,38 @@ export const createApp = () => {
     } catch (error) {
       console.error("Failed to save catalog:", error);
       res.status(500).json({ error: "Failed to save catalog. Please try again." });
+    }
+  });
+
+  // Uploaded images are stored in Vercel Blob and referenced by URL, so the catalog
+  // PUT payload never has to carry large base64 images (which triggered 413s on Vercel).
+  const MAX_UPLOAD_BYTES = 2_000_000;
+  app.post("/api/admin/upload-image", requireAdmin, express.raw({ type: "image/*", limit: "4mb" }), async (req, res) => {
+    try {
+      const contentType = req.headers["content-type"];
+      if (!contentType || !contentType.startsWith("image/")) {
+        res.status(400).json({ error: "Only image uploads are supported." });
+        return;
+      }
+      if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+        res.status(400).json({ error: "No image data received." });
+        return;
+      }
+      if (req.body.length > MAX_UPLOAD_BYTES) {
+        res.status(413).json({ error: `Image is too large (${Math.round(req.body.length / 1024)} KB). Please choose a smaller image.` });
+        return;
+      }
+      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        res.status(500).json({ error: "Image storage is not configured on the server." });
+        return;
+      }
+      const extension = contentType.split("/")[1]?.split("+")[0] || "jpg";
+      const filename = `products/${crypto.randomUUID()}.${extension}`;
+      const blob = await put(filename, req.body, { access: "public", contentType, addRandomSuffix: false });
+      res.json({ url: blob.url });
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      res.status(500).json({ error: "Image upload failed. Please try again." });
     }
   });
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CatalogProduct, CategoryKey, CatalogVariant } from "@/lib/catalog";
 import { CATEGORY_KEYS, getCatalogSnapshot, syncCatalogProducts } from "@/lib/catalog";
+import { MAX_IMAGE_BYTES, compressImageFile, uploadProductImage } from "@/lib/imageUpload";
 
 const emptyProduct = (): CatalogProduct => ({
   id: "",
@@ -166,14 +167,24 @@ export default function AdminPage() {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      updateDraft("image", result || "/assets/placeholder.svg");
-    };
-    reader.readAsDataURL(file);
+    setNotice("Compressing image...");
+    try {
+      const compressed = await compressImageFile(file);
+      if (compressed.size > MAX_IMAGE_BYTES) {
+        setNotice(`Image is still too large (${Math.round(compressed.size / 1024)} KB) after compression. Please choose a smaller image.`);
+        return;
+      }
+
+      setNotice("Uploading image...");
+      const url = await uploadProductImage(compressed);
+      updateDraft("image", url);
+      setNotice("Image uploaded successfully.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Image upload failed.");
+    }
   };
 
   return (
