@@ -12,7 +12,9 @@
     "start": "node --env-file=.env dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:init": "node scripts/migrate-catalog-to-db.mjs",
+    "db:migrate": "node scripts/migrate-catalog-to-db.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
