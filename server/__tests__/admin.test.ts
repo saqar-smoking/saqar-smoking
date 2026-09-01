@@ -131,4 +131,66 @@ describe("admin catalog API", () => {
     const generatedCatalog = await generatedId.json() as { products: CatalogProduct[] };
     expect(generatedCatalog.products[0]?.id).toMatch(/^product-[0-9a-f-]{36}$/);
   });
+
+  it("creates and updates a product with an electronicDevices category and a base64 uploaded image", async () => {
+    const read = await fetch(`${baseUrl}/api/admin/catalog`);
+    const original = await read.json() as { products: CatalogProduct[] };
+    // ~350KB of base64 data, representative of a real uploaded photo.
+    const base64Image = `data:image/png;base64,${"A".repeat(350_000)}`;
+    const created = {
+      ...original.products[0],
+      id: "electronic-device-test",
+      name: "Vape kit",
+      category: "electronicDevices" as const,
+      image: base64Image,
+    };
+
+    const save = await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: [created, ...original.products] }),
+    });
+    expect(save.status).toBe(200);
+    const saved = await save.json() as { products: CatalogProduct[] };
+    const savedProduct = saved.products.find((product) => product.id === created.id);
+    expect(savedProduct?.category).toBe("electronicDevices");
+    expect(savedProduct?.image).toBe(base64Image);
+
+    const updated = { ...created, name: "Vape kit (updated)", image: `data:image/jpeg;base64,${"B".repeat(350_000)}` };
+    const update = await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: [updated, ...original.products] }),
+    });
+    expect(update.status).toBe(200);
+    const updatedCatalog = await update.json() as { products: CatalogProduct[] };
+    const updatedProduct = updatedCatalog.products.find((product) => product.id === created.id);
+    expect(updatedProduct?.name).toBe("Vape kit (updated)");
+    expect(updatedProduct?.image).toBe(updated.image);
+
+    // restore the original catalog for the remaining tests
+    await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: original.products }),
+    });
+  });
+
+  it("returns a descriptive JSON error instead of crashing when the payload is too large", async () => {
+    const read = await fetch(`${baseUrl}/api/admin/catalog`);
+    const original = await read.json() as { products: CatalogProduct[] };
+    // Comfortably over the server's 4MB body limit.
+    const oversizedImage = `data:image/png;base64,${"A".repeat(5_000_000)}`;
+    const tooLarge = { ...original.products[0], id: "too-large-test", image: oversizedImage };
+
+    const save = await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: [tooLarge] }),
+    });
+    expect(save.status).toBe(413);
+    const payload = await save.json() as { error?: string };
+    expect(typeof payload.error).toBe("string");
+    expect(payload.error).toMatch(/too large/i);
+  });
 });

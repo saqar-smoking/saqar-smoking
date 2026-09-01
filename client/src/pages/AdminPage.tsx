@@ -87,7 +87,7 @@ export default function AdminPage() {
 
     if (!response.ok) {
       const body = await response.json().catch(() => null) as { error?: string } | null;
-      throw new Error(body?.error || "Save failed");
+      throw new Error(body?.error || `Save failed (server responded with ${response.status}).`);
     }
 
     const json = await response.json() as { products?: CatalogProduct[] };

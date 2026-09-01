@@ -178,7 +178,20 @@ export const createApp = () => {
 
   const staticPath = path.resolve(__dirname, "public");
 
-  app.use(express.json({ limit: "2mb" }));
+  app.use(express.json({ limit: "4mb" }));
+  // Vercel Functions hard-cap request bodies at 4.5MB; body-parser errors (bad JSON,
+  // payload too large) must still resolve to JSON so the admin UI can show a real message.
+  app.use((err: (Error & { status?: number; statusCode?: number; type?: string }) | undefined, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!err) {
+      next();
+      return;
+    }
+    const status = err.status || err.statusCode || 400;
+    const message = err.type === "entity.too.large"
+      ? "The catalog payload is too large (over 4MB). Use a smaller product image and try again."
+      : "The request body could not be parsed.";
+    res.status(status).json({ error: message });
+  });
   app.use((req, res, next) => {
     res.setHeader("X-Frame-Options", "DENY");
     next();
@@ -250,6 +263,24 @@ export const createApp = () => {
 
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
+  });
+
+  // Final safety net: any unhandled error on an /api route must still come back as JSON.
+  app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!err) {
+      next();
+      return;
+    }
+    console.error("Unhandled server error:", err);
+    if (res.headersSent) {
+      next(err);
+      return;
+    }
+    if (req.path.startsWith("/api/")) {
+      res.status(500).json({ error: "Unexpected server error. Please try again." });
+      return;
+    }
+    res.status(500).send("Unexpected server error.");
   });
 
   return app;
