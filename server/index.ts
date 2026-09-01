@@ -169,11 +169,21 @@ const getSessionSecret = () => {
 };
 
 const getAdminCredentials = () => {
-  // Read fresh from environment on every call to support dynamic env var updates
-  // Fallback to production credentials if env vars not set
-  const username = process.env.ADMIN_USERNAME?.trim() || "saqar_admin";
-  const password = process.env.ADMIN_PASSWORD?.trim() || "Admin_03C1CCDE6759C3D906B71621!Sq2026";
-  return { username, password };
+  // Production credentials - hardcoded as fallback, can be overridden by env vars
+  const defaultUsername = "saqar_admin";
+  const defaultPassword = "Admin_03C1CCDE6759C3D906B71621!Sq2026";
+  
+  // Try environment variables first
+  const envUsername = process.env.ADMIN_USERNAME?.trim();
+  const envPassword = process.env.ADMIN_PASSWORD?.trim();
+  
+  // Use env vars if both are set and non-empty, otherwise use defaults
+  if (envUsername && envPassword) {
+    return { username: envUsername, password: envPassword };
+  }
+  
+  // Fallback to hardcoded production credentials
+  return { username: defaultUsername, password: defaultPassword };
 };
 
 const getSessionHash = (sessionSecret: string, username: string, password: string) => crypto.createHmac("sha256", sessionSecret).update(`${username}:${password}`).digest("hex");
