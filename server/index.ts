@@ -198,11 +198,26 @@ export const createApp = () => {
     // Read credentials fresh on every request
     const { username: expectedUsername, password: expectedPassword } = getAdminCredentials();
     
+    // Safe diagnostics (no password values logged)
+    console.log("[LOGIN_DEBUG] Endpoint called");
+    console.log("[LOGIN_DEBUG] Expected username:", expectedUsername);
+    console.log("[LOGIN_DEBUG] Submitted username length:", submittedUsername.length);
+    console.log("[LOGIN_DEBUG] Expected password length:", expectedPassword.length);
+    console.log("[LOGIN_DEBUG] Submitted password length:", submittedPassword.length);
+    console.log("[LOGIN_DEBUG] Username match:", submittedUsername === expectedUsername);
+    console.log("[LOGIN_DEBUG] Password match:", submittedPassword === expectedPassword);
+    console.log("[LOGIN_DEBUG] NODE_ENV:", process.env.NODE_ENV);
+    console.log("[LOGIN_DEBUG] ADMIN_USERNAME env set:", !!process.env.ADMIN_USERNAME);
+    console.log("[LOGIN_DEBUG] ADMIN_PASSWORD env set:", !!process.env.ADMIN_PASSWORD);
+    
     if (submittedUsername !== expectedUsername || submittedPassword !== expectedPassword) {
-      res.status(401).json({ error: "Unauthorized" });
+      const reason = submittedUsername !== expectedUsername ? "username" : "password";
+      console.log("[LOGIN_DEBUG] Auth failed - invalid", reason);
+      res.status(401).json({ error: "Unauthorized", debug: { reason } });
       return;
     }
 
+    console.log("[LOGIN_DEBUG] Auth successful for user:", submittedUsername);
     const sessionToken = getSessionHash(sessionSecret, submittedUsername, submittedPassword);
     res.cookie(COOKIE_NAME, sessionToken, {
       httpOnly: true,
