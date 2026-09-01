@@ -156,13 +156,13 @@ const validateProducts = (products: unknown[]) => {
 };
 
 const getAdminConfig = () => {
-  const username = process.env.ADMIN_USERNAME;
-  const password = process.env.ADMIN_PASSWORD;
+  const username = process.env.ADMIN_USERNAME?.trim();
+  const password = process.env.ADMIN_PASSWORD?.trim();
   if (!username || !password) {
     throw new Error("ADMIN_USERNAME and ADMIN_PASSWORD must be configured");
   }
   ensureDataFile();
-  const sessionSecret = process.env.ADMIN_SESSION_SECRET || (fs.existsSync(SESSION_SECRET_FILE)
+  const sessionSecret = process.env.ADMIN_SESSION_SECRET?.trim() || (fs.existsSync(SESSION_SECRET_FILE)
     ? fs.readFileSync(SESSION_SECRET_FILE, "utf8").trim()
     : crypto.randomBytes(32).toString("hex"));
   if (!process.env.ADMIN_SESSION_SECRET && !fs.existsSync(SESSION_SECRET_FILE)) {
@@ -186,8 +186,8 @@ export const createApp = () => {
   });
 
   app.post("/api/admin/login", (req, res) => {
-    const username = String(req.body?.username ?? "");
-    const password = String(req.body?.password ?? "");
+    const username = String(req.body?.username ?? "").trim();
+    const password = String(req.body?.password ?? "").trim();
     if (username !== adminConfig.username || password !== adminConfig.password) {
       res.status(401).json({ error: "Unauthorized" });
       return;
