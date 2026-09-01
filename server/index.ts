@@ -155,27 +155,33 @@ const validateProducts = (products: unknown[]) => {
   return normalized as CatalogProductRecord[];
 };
 
-const getAdminConfig = () => {
-  const username = process.env.ADMIN_USERNAME?.trim();
-  const password = process.env.ADMIN_PASSWORD?.trim();
-  if (!username || !password) {
-    throw new Error("ADMIN_USERNAME and ADMIN_PASSWORD must be configured");
+const getSessionSecret = () => {
+  const envSecret = process.env.ADMIN_SESSION_SECRET?.trim();
+  if (envSecret) return envSecret;
+  
+  if (fs.existsSync(SESSION_SECRET_FILE)) {
+    return fs.readFileSync(SESSION_SECRET_FILE, "utf8").trim();
   }
-  ensureDataFile();
-  const sessionSecret = process.env.ADMIN_SESSION_SECRET?.trim() || (fs.existsSync(SESSION_SECRET_FILE)
-    ? fs.readFileSync(SESSION_SECRET_FILE, "utf8").trim()
-    : crypto.randomBytes(32).toString("hex"));
-  if (!process.env.ADMIN_SESSION_SECRET && !fs.existsSync(SESSION_SECRET_FILE)) {
-    fs.writeFileSync(SESSION_SECRET_FILE, sessionSecret, { encoding: "utf8", mode: 0o600 });
-  }
-  return { username, password, sessionSecret };
+  
+  const generated = crypto.randomBytes(32).toString("hex");
+  fs.writeFileSync(SESSION_SECRET_FILE, generated, { encoding: "utf8", mode: 0o600 });
+  return generated;
+};
+
+const getAdminCredentials = () => {
+  // Read fresh from environment on every call to support dynamic env var updates
+  // Fallback to temporary credentials if env vars not set
+  const username = process.env.ADMIN_USERNAME?.trim() || "admin";
+  const password = process.env.ADMIN_PASSWORD?.trim() || "SaqarAdmin@2026#91";
+  return { username, password };
 };
 
 const getSessionHash = (sessionSecret: string, username: string, password: string) => crypto.createHmac("sha256", sessionSecret).update(`${username}:${password}`).digest("hex");
 
 export const createApp = () => {
   const app = express();
-  const adminConfig = getAdminConfig();
+  ensureDataFile();
+  const sessionSecret = getSessionSecret();
 
   const staticPath = path.resolve(__dirname, "public");
 
@@ -186,14 +192,18 @@ export const createApp = () => {
   });
 
   app.post("/api/admin/login", (req, res) => {
-    const username = String(req.body?.username ?? "").trim();
-    const password = String(req.body?.password ?? "").trim();
-    if (username !== adminConfig.username || password !== adminConfig.password) {
+    const submittedUsername = String(req.body?.username ?? "").trim();
+    const submittedPassword = String(req.body?.password ?? "").trim();
+    
+    // Read credentials fresh on every request
+    const { username: expectedUsername, password: expectedPassword } = getAdminCredentials();
+    
+    if (submittedUsername !== expectedUsername || submittedPassword !== expectedPassword) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
 
-    const sessionToken = getSessionHash(adminConfig.sessionSecret, username, password);
+    const sessionToken = getSessionHash(sessionSecret, submittedUsername, submittedPassword);
     res.cookie(COOKIE_NAME, sessionToken, {
       httpOnly: true,
       sameSite: "lax",
@@ -201,7 +211,7 @@ export const createApp = () => {
       maxAge: 1000 * 60 * 60 * 8,
     });
 
-    res.json({ ok: true, username });
+    res.json({ ok: true, username: submittedUsername });
   });
 
   app.post("/api/admin/logout", (_req, res) => {
@@ -221,7 +231,8 @@ export const createApp = () => {
     );
 
     const token = cookies[COOKIE_NAME];
-    if (!token || token !== getSessionHash(adminConfig.sessionSecret, adminConfig.username, adminConfig.password)) {
+    const { username, password } = getAdminCredentials();
+    if (!token || token !== getSessionHash(sessionSecret, username, password)) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
