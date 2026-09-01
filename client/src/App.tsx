@@ -18,7 +18,7 @@ import { CommerceProvider } from "./contexts/CommerceContext";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return <Switch><Route path="/" component={Home} />
-      <Route path="/shop" component={ShopPage} />
+      <Route path="/shop/:category?" component={ShopPage} />
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/order" component={OrderPage} />

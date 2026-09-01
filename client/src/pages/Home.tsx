@@ -266,7 +266,7 @@ export default function Home() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const openCategory = (category: string) => `/shop?category=${category}`;
+  const openCategory = (category: string) => `/shop/category-${category}`;
 
   return (
     <div className={`site-shell ${isRtl ? "rtl" : "ltr"}`} dir={isRtl ? "rtl" : "ltr"}>

@@ -1,17 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ChevronDown, Filter, Search, SlidersHorizontal, X } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useRoute } from "wouter";
 import { AgeGateGuard, CommerceHeader, ProductCard } from "@/components/CommerceShell";
 import { catalogProducts, CATEGORY_KEYS, fetchCatalogProducts, type CategoryKey, type CatalogProduct } from "@/lib/catalog";
 import { categoryLabels } from "@/lib/translations";
 import { useCommerce } from "@/contexts/CommerceContext";
 
+const normalizeCategoryValue = (value: string | null | undefined): CategoryKey | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const withoutPrefix = trimmed.startsWith("category-") ? trimmed.slice("category-".length) : trimmed;
+  return CATEGORY_KEYS.includes(withoutPrefix as CategoryKey) ? (withoutPrefix as CategoryKey) : null;
+};
+
 export default function ShopPage() {
   const { language, t } = useCommerce();
-  const params = new URLSearchParams(window.location.search);
-  const initialCategory = params.get("category") as CategoryKey | null;
+  const [, routeParams] = useRoute("/shop/:category?");
+  const pathCategory = normalizeCategoryValue(routeParams?.category ?? null);
+  const queryCategory = normalizeCategoryValue(new URLSearchParams(window.location.search).get("category"));
+  const initialCategory = pathCategory ?? queryCategory ?? null;
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<CategoryKey | "all">(initialCategory && CATEGORY_KEYS.includes(initialCategory) ? initialCategory : "all");
+  const [category, setCategory] = useState<CategoryKey | "all">(initialCategory ?? "all");
   const [brand, setBrand] = useState("all");
   const [availability, setAvailability] = useState("all");
   const [minPrice, setMinPrice] = useState("");
@@ -19,6 +29,11 @@ export default function ShopPage() {
   const [sort, setSort] = useState("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [products, setProducts] = useState<CatalogProduct[]>(catalogProducts);
+
+  useEffect(() => {
+    const nextCategory = normalizeCategoryValue(routeParams?.category ?? new URLSearchParams(window.location.search).get("category"));
+    setCategory(nextCategory ?? "all");
+  }, [routeParams?.category]);
 
   useEffect(() => {
     void fetchCatalogProducts().then((nextProducts) => setProducts(nextProducts.filter((product) => !product.archived)));
