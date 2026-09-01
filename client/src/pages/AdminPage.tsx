@@ -39,6 +39,23 @@ export default function AdminPage() {
 
   const catalogSummary = useMemo(() => getCatalogSnapshot(), [products]);
 
+  // Check if admin auth is disabled on the server
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch("/api/admin/catalog", { credentials: "same-origin" });
+      if (response.ok) {
+        // Auth is bypassed or user has valid session
+        return true;
+      } else if (response.status === 401) {
+        // Auth is required
+        return false;
+      }
+    } catch (error) {
+      console.error("Auth status check failed:", error);
+    }
+    return false;
+  };
+
   const loadCatalog = async () => {
     setLoading(true);
     setNotice("");
@@ -71,6 +88,17 @@ export default function AdminPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // On mount, check if auth is disabled or user has a valid session
+    const initAuth = async () => {
+      const isAuthed = await checkAuthStatus();
+      if (isAuthed) {
+        setAuthenticated(true);
+      }
+    };
+    void initAuth();
+  }, []);
 
   useEffect(() => {
     if (authenticated) {

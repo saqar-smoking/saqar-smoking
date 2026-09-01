@@ -233,6 +233,14 @@ export const createApp = () => {
   });
 
   const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // Temporary: Allow bypassing authentication if ADMIN_AUTH_DISABLED is set to true
+    const authDisabled = process.env.ADMIN_AUTH_DISABLED === "true";
+    if (authDisabled) {
+      console.log("[AUTH] Bypassing authentication - ADMIN_AUTH_DISABLED is set to true");
+      next();
+      return;
+    }
+
     const cookieHeader = req.headers.cookie ?? "";
     const cookies = Object.fromEntries(
       cookieHeader.split(";").map((entry) => {
