@@ -199,25 +199,28 @@ export const createApp = () => {
     const { username: expectedUsername, password: expectedPassword } = getAdminCredentials();
     
     // Safe diagnostics (no password values logged)
-    console.log("[LOGIN_DEBUG] Endpoint called");
-    console.log("[LOGIN_DEBUG] Expected username:", expectedUsername);
-    console.log("[LOGIN_DEBUG] Submitted username length:", submittedUsername.length);
-    console.log("[LOGIN_DEBUG] Expected password length:", expectedPassword.length);
-    console.log("[LOGIN_DEBUG] Submitted password length:", submittedPassword.length);
-    console.log("[LOGIN_DEBUG] Username match:", submittedUsername === expectedUsername);
-    console.log("[LOGIN_DEBUG] Password match:", submittedPassword === expectedPassword);
-    console.log("[LOGIN_DEBUG] NODE_ENV:", process.env.NODE_ENV);
-    console.log("[LOGIN_DEBUG] ADMIN_USERNAME env set:", !!process.env.ADMIN_USERNAME);
-    console.log("[LOGIN_DEBUG] ADMIN_PASSWORD env set:", !!process.env.ADMIN_PASSWORD);
+    const usernameMatch = submittedUsername === expectedUsername;
+    const passwordMatch = submittedPassword === expectedPassword;
     
-    if (submittedUsername !== expectedUsername || submittedPassword !== expectedPassword) {
-      const reason = submittedUsername !== expectedUsername ? "username" : "password";
-      console.log("[LOGIN_DEBUG] Auth failed - invalid", reason);
-      res.status(401).json({ error: "Unauthorized", debug: { reason } });
+    console.log("[LOGIN] Endpoint called");
+    console.log("[LOGIN] Expected username:", expectedUsername);
+    console.log("[LOGIN] Submitted username:", submittedUsername);
+    console.log("[LOGIN] Username match:", usernameMatch, "| Length - expected:", expectedUsername.length, "submitted:", submittedUsername.length);
+    console.log("[LOGIN] Password match:", passwordMatch, "| Length - expected:", expectedPassword.length, "submitted:", submittedPassword.length);
+    console.log("[LOGIN] NODE_ENV:", process.env.NODE_ENV);
+    console.log("[LOGIN] Env vars present - USERNAME:", !!process.env.ADMIN_USERNAME, "PASSWORD:", !!process.env.ADMIN_PASSWORD);
+    
+    if (!usernameMatch || !passwordMatch) {
+      const reason = !usernameMatch ? "username_mismatch" : "password_mismatch";
+      console.log("[LOGIN] FAILED -", reason);
+      res.status(401).json({ 
+        error: "Unauthorized",
+        debug: { reason, expectedUsername }
+      });
       return;
     }
 
-    console.log("[LOGIN_DEBUG] Auth successful for user:", submittedUsername);
+    console.log("[LOGIN] SUCCESS for user:", submittedUsername);
     const sessionToken = getSessionHash(sessionSecret, submittedUsername, submittedPassword);
     res.cookie(COOKIE_NAME, sessionToken, {
       httpOnly: true,
