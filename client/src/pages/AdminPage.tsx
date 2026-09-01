@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CatalogProduct, CategoryKey, CatalogVariant } from "@/lib/catalog";
-import { getCatalogSnapshot, syncCatalogProducts } from "@/lib/catalog";
+import { CATEGORY_KEYS, getCatalogSnapshot, syncCatalogProducts } from "@/lib/catalog";
 
 const emptyProduct = (): CatalogProduct => ({
   id: "",
@@ -44,7 +44,8 @@ export default function AdminPage() {
       const response = await fetch("/api/admin/catalog", { credentials: "same-origin" });
 
       if (!response.ok) {
-        throw new Error("Unable to load catalog");
+        const body = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(body?.error || "Unable to load catalog");
       }
 
       const payload = await response.json() as { products?: CatalogProduct[]; metadata?: { categories?: string[]; brands?: string[]; flavors?: string[] } };
@@ -57,7 +58,7 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error(error);
-      setNotice("Catalog could not be loaded.");
+      setNotice(error instanceof Error ? error.message : "Catalog could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -85,7 +86,8 @@ export default function AdminPage() {
     });
 
     if (!response.ok) {
-      throw new Error("Save failed");
+      const body = await response.json().catch(() => null) as { error?: string } | null;
+      throw new Error(body?.error || "Save failed");
     }
 
     const json = await response.json() as { products?: CatalogProduct[] };
@@ -130,8 +132,8 @@ export default function AdminPage() {
     try {
       await saveCatalog(nextProducts);
       setNotice("Product saved successfully.");
-    } catch {
-      setNotice("The product could not be saved.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "The product could not be saved.");
     }
   };
 
@@ -231,7 +233,7 @@ export default function AdminPage() {
               <label style={{ display: "grid", gap: 8 }}>
                 <span>Category</span>
                 <select value={draft.category} onChange={(event) => updateDraft("category", event.target.value as CategoryKey)} style={{ padding: 10, borderRadius: 10, border: "1px solid #d2bf9c" }}>
-                  {catalogSummary.metadata.categories.map((category) => <option key={category} value={category}>{category}</option>)}
+                  {CATEGORY_KEYS.map((category) => <option key={category} value={category}>{category}</option>)}
                 </select>
               </label>
               <label style={{ display: "grid", gap: 8 }}>

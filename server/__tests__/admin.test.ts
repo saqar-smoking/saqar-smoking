@@ -13,6 +13,8 @@ process.env.CATALOG_DATA_FILE = catalogFile;
 
 const { createApp } = await import("../index");
 
+const ALL_CATEGORIES = ["accessories", "charcoalMore", "electronicDevices", "hookahs", "smokingDevices", "tobacco"];
+
 describe("admin catalog API", () => {
   let server: Server;
   let baseUrl: string;
@@ -36,6 +38,38 @@ describe("admin catalog API", () => {
     const privatePage = await fetch(`${baseUrl}/admin`);
     expect(privatePage.status).not.toBe(401);
     expect(privatePage.status).not.toBe(403);
+  });
+
+  it("always returns every valid category for the dropdown, even when the stored catalog has none", async () => {
+    const publicCatalog = await fetch(`${baseUrl}/api/catalog`);
+    const publicPayload = await publicCatalog.json() as { metadata: { categories: string[] } };
+    expect(publicPayload.metadata.categories).toEqual(ALL_CATEGORIES);
+
+    const adminCatalog = await fetch(`${baseUrl}/api/admin/catalog`);
+    const adminPayload = await adminCatalog.json() as { metadata: { categories: string[] } };
+    expect(adminPayload.metadata.categories).toEqual(ALL_CATEGORIES);
+  });
+
+  it("keeps returning all categories after saving products that only use one category", async () => {
+    const read = await fetch(`${baseUrl}/api/admin/catalog`);
+    const original = await read.json() as { products: CatalogProduct[] };
+    const singleCategoryProduct = { ...original.products[0], category: "hookahs" as const };
+
+    const save = await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: [singleCategoryProduct] }),
+    });
+    expect(save.status).toBe(200);
+    const saved = await save.json() as { metadata: { categories: string[] } };
+    expect(saved.metadata.categories).toEqual(ALL_CATEGORIES);
+
+    // restore the original catalog for the remaining tests
+    await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: original.products }),
+    });
   });
 
   it("supports CRUD and persists the result for the public catalog", async () => {

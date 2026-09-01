@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
 import { sql } from "@vercel/postgres";
@@ -9,7 +10,12 @@ import { sql } from "@vercel/postgres";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_FILE = process.env.CATALOG_DATA_FILE || path.resolve(__dirname, "..", "data", "catalog.json");
+// The repo-bundled seed catalog. Readable in every environment, including Vercel's
+// read-only serverless filesystem, but must never be written to in production.
+const SEED_FILE = path.resolve(__dirname, "..", "data", "catalog.json");
+// Vercel functions can only write inside the OS temp directory; everywhere else
+// (local dev, tests) we read/write the seed file directly so data persists on disk.
+const DATA_FILE = process.env.CATALOG_DATA_FILE || (process.env.VERCEL ? path.join(os.tmpdir(), "al-saqar-catalog.json") : SEED_FILE);
 
 type CatalogProductRecord = {
   id: string;
@@ -34,9 +40,13 @@ type CatalogData = {
   metadata: { categories: string[]; brands: string[]; flavors: string[] };
 };
 
+const VALID_CATEGORIES = ["hookahs", "tobacco", "smokingDevices", "accessories", "electronicDevices", "charcoalMore"];
+
+// The admin category dropdown must always offer every valid category, regardless
+// of which categories the current products happen to use.
 const DEFAULT_CATALOG: CatalogData = {
   products: [],
-  metadata: { categories: [], brands: [], flavors: [] }
+  metadata: { categories: [...VALID_CATEGORIES].sort(), brands: [], flavors: [] }
 };
 
 const ensureDataFile = () => {
@@ -45,20 +55,26 @@ const ensureDataFile = () => {
     fs.mkdirSync(dataDir, { recursive: true });
   }
   if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(DEFAULT_CATALOG, null, 2), "utf8");
+    // Seed a fresh writable copy (e.g. /tmp on Vercel) from the bundled seed file when available.
+    if (DATA_FILE !== SEED_FILE && fs.existsSync(SEED_FILE)) {
+      fs.copyFileSync(SEED_FILE, DATA_FILE);
+    } else {
+      fs.writeFileSync(DATA_FILE, JSON.stringify(DEFAULT_CATALOG, null, 2), "utf8");
+    }
   }
 };
 
 const readCatalogFromDisk = (): CatalogData => {
-  ensureDataFile();
   try {
+    ensureDataFile();
     const raw = fs.readFileSync(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw) as { products?: unknown[]; metadata?: { categories?: string[]; brands?: string[]; flavors?: string[] } };
     if (!parsed || !Array.isArray(parsed.products)) {
       return DEFAULT_CATALOG;
     }
     return { products: parsed.products as CatalogProductRecord[], metadata: { categories: parsed.metadata?.categories ?? DEFAULT_CATALOG.metadata.categories, brands: parsed.metadata?.brands ?? DEFAULT_CATALOG.metadata.brands, flavors: parsed.metadata?.flavors ?? DEFAULT_CATALOG.metadata.flavors } };
-  } catch {
+  } catch (error) {
+    console.warn("Falling back to the default catalog because the disk store could not be read:", error);
     return DEFAULT_CATALOG;
   }
 };
@@ -69,21 +85,25 @@ const writeCatalogToDisk = (catalog: CatalogData) => {
 };
 
 const readCatalog = async (): Promise<CatalogData> => {
+  let catalog: CatalogData;
   if (process.env.POSTGRES_URL) {
     try {
       await sql`CREATE TABLE IF NOT EXISTS catalog_store (key TEXT PRIMARY KEY, value JSONB NOT NULL);`;
       const result = await sql<{ value: CatalogData }>`SELECT value FROM catalog_store WHERE key = 'catalog';`;
-      if (result.rows[0]?.value) {
-        const catalog = result.rows[0].value as CatalogData;
-        if (Array.isArray(catalog.products)) {
-          return catalog;
-        }
+      if (result.rows[0]?.value && Array.isArray(result.rows[0].value.products)) {
+        catalog = result.rows[0].value;
+      } else {
+        catalog = readCatalogFromDisk();
       }
     } catch (error) {
       console.warn("Falling back to disk catalog storage because Postgres is unavailable:", error);
+      catalog = readCatalogFromDisk();
     }
+  } else {
+    catalog = readCatalogFromDisk();
   }
-  return readCatalogFromDisk();
+  // The category dropdown must always list every valid category, not just the ones in use.
+  return { ...catalog, metadata: { ...catalog.metadata, categories: [...VALID_CATEGORIES].sort() } };
 };
 
 const writeCatalog = async (catalog: CatalogData) => {
@@ -99,7 +119,7 @@ const writeCatalog = async (catalog: CatalogData) => {
   writeCatalogToDisk(catalog);
 };
 
-const VALID_CATEGORIES = new Set(["hookahs", "tobacco", "smokingDevices", "accessories", "electronicDevices", "charcoalMore"]);
+const VALID_CATEGORIES_SET = new Set(VALID_CATEGORIES);
 const VALID_AVAILABILITY = new Set(["on_request", "available", "out_of_stock"]);
 
 const validateProducts = (products: unknown[]) => {
@@ -117,7 +137,7 @@ const validateProducts = (products: unknown[]) => {
     const availability = typeof product.availability === "string" ? product.availability : "";
     const priceAED = product.priceAED === null || product.priceAED === undefined || product.priceAED === "" ? null : Number(product.priceAED);
     if (!name || name.length > 200) throw new Error(`Product ${index + 1} needs a name under 200 characters`);
-    if (!VALID_CATEGORIES.has(category)) throw new Error(`Product ${index + 1} has an invalid category`);
+    if (!VALID_CATEGORIES_SET.has(category)) throw new Error(`Product ${index + 1} has an invalid category`);
     if (!VALID_AVAILABILITY.has(availability)) throw new Error(`Product ${index + 1} has an invalid availability`);
     if (priceAED !== null && (!Number.isFinite(priceAED) || priceAED < 0 || priceAED > 100000000)) throw new Error(`Product ${index + 1} has an invalid price`);
     const list = (key: string) => {
@@ -155,7 +175,6 @@ const validateProducts = (products: unknown[]) => {
 
 export const createApp = () => {
   const app = express();
-  ensureDataFile();
 
   const staticPath = path.resolve(__dirname, "public");
 
@@ -171,13 +190,23 @@ export const createApp = () => {
   };
 
   app.get("/api/catalog", async (_req, res) => {
-    const catalog = await readCatalog();
-    res.json(catalog);
+    try {
+      const catalog = await readCatalog();
+      res.json(catalog);
+    } catch (error) {
+      console.error("Failed to load catalog:", error);
+      res.status(500).json({ error: "Failed to load catalog" });
+    }
   });
 
   app.get("/api/admin/catalog", requireAdmin, async (_req, res) => {
-    const catalog = await readCatalog();
-    res.json(catalog);
+    try {
+      const catalog = await readCatalog();
+      res.json(catalog);
+    } catch (error) {
+      console.error("Failed to load admin catalog:", error);
+      res.status(500).json({ error: "Failed to load catalog" });
+    }
   });
 
   app.put("/api/admin/catalog", requireAdmin, async (req, res) => {
@@ -198,14 +227,19 @@ export const createApp = () => {
     const catalog = {
       products,
       metadata: {
-        categories: Array.from(new Set(products.map((product) => product.category))).sort(),
+        categories: [...VALID_CATEGORIES].sort(),
         brands: Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).sort(),
         flavors: Array.from(new Set(products.flatMap((product) => product.keywords))).sort(),
       },
     };
 
-    await writeCatalog(catalog);
-    res.json(catalog);
+    try {
+      await writeCatalog(catalog);
+      res.json(catalog);
+    } catch (error) {
+      console.error("Failed to save catalog:", error);
+      res.status(500).json({ error: "Failed to save catalog. Please try again." });
+    }
   });
 
   app.use(express.static(staticPath, { maxAge: "1h" }));
