@@ -122,18 +122,8 @@ const writeCatalog = async (catalog: CatalogData) => {
 
 const VALID_CATEGORIES_SET = new Set(VALID_CATEGORIES);
 const VALID_AVAILABILITY = new Set(["on_request", "available", "out_of_stock"]);
-// Uploaded images should go through /api/admin/upload-image and be stored as hosted
-// URLs. This cap only guards against someone pasting an oversized base64 string directly;
-// existing small embedded images (a few hundred KB) stay well under it.
-const MAX_INLINE_IMAGE_CHARS = 2_000_000;
 
-const validateImage = (value: unknown, label: string) => {
-  const image = typeof value === "string" && value ? value : "/assets/placeholder.svg";
-  if (image.length > MAX_INLINE_IMAGE_CHARS) {
-    throw new Error(`${label} image is too large; upload it first to get a hosted URL`);
-  }
-  return image;
-};
+const validateImage = (value: unknown) => (typeof value === "string" && value ? value : "/assets/placeholder.svg");
 
 const validateProducts = (products: unknown[]) => {
   const ids = new Set<string>();
@@ -176,16 +166,56 @@ const validateProducts = (products: unknown[]) => {
         const variantAvailability = typeof item.availability === "string" ? item.availability : "";
         if (!name || !VALID_AVAILABILITY.has(variantAvailability)) throw new Error(`Product ${index + 1} has invalid variant ${variantIndex + 1}`);
         const variantImage = typeof item.image === "string" && item.image ? item.image : undefined;
-        if (variantImage && variantImage.length > MAX_INLINE_IMAGE_CHARS) throw new Error(`Product ${index + 1} has a variant image that is too large; upload it first to get a hosted URL`);
         return { id: typeof item.id === "string" && item.id.trim() ? item.id.trim() : `variant-${crypto.randomUUID()}`, name, availability: variantAvailability, image: variantImage };
       }) : [],
-      image: validateImage(product.image, `Product ${index + 1}`),
+      image: validateImage(product.image),
       featured: Boolean(product.featured),
       newestRank: Number.isFinite(Number(product.newestRank)) ? Number(product.newestRank) : 1,
       archived: Boolean(product.archived),
     };
   });
   return normalized as CatalogProductRecord[];
+};
+
+// Legacy embedded images above this size are migrated to Vercel Blob on save, so the
+// catalog JSON/database stores a short hosted URL instead of a large base64 payload.
+// Small existing base64 images stay inline for backward compatibility.
+const MIGRATION_THRESHOLD_CHARS = 500_000;
+const DATA_URL_PATTERN = /^data:([^;,]+)(?:;[^,]*)?,([\s\S]+)$/;
+
+const migrateImageIfNeeded = async (image: string, label: string): Promise<string> => {
+  if (!image.startsWith("data:") || image.length <= MIGRATION_THRESHOLD_CHARS) {
+    return image;
+  }
+  const match = image.match(DATA_URL_PATTERN);
+  if (!match) {
+    // Not a recognizable data URL (e.g. already a hosted URL); leave it untouched.
+    return image;
+  }
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    throw new Error(`${label} image could not be migrated to hosted storage because Blob storage is not configured`);
+  }
+  const [, contentType, base64Data] = match;
+  const buffer = Buffer.from(base64Data, "base64");
+  const extension = contentType.split("/")[1]?.split("+")[0] || "jpg";
+  const filename = `products/${crypto.randomUUID()}.${extension}`;
+  const blob = await put(filename, buffer, { access: "public", contentType, addRandomSuffix: false });
+  return blob.url;
+};
+
+/** Uploads any oversized embedded base64 product/variant images to Blob storage in place. */
+const migrateLegacyImages = async (products: CatalogProductRecord[]): Promise<CatalogProductRecord[]> => {
+  return Promise.all(products.map(async (product, index) => {
+    const image = await migrateImageIfNeeded(product.image, `Product ${index + 1}`);
+    const variants = product.variants
+      ? await Promise.all(product.variants.map(async (variant, variantIndex) => {
+          if (!variant.image) return variant;
+          const variantImage = await migrateImageIfNeeded(variant.image, `Product ${index + 1} variant ${variantIndex + 1}`);
+          return variantImage === variant.image ? variant : { ...variant, image: variantImage };
+        }))
+      : product.variants;
+    return image === product.image && variants === product.variants ? product : { ...product, image, variants };
+  }));
 };
 
 export const createApp = () => {
@@ -249,6 +279,14 @@ export const createApp = () => {
       products = validateProducts(payload.products);
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product data" });
+      return;
+    }
+
+    try {
+      products = await migrateLegacyImages(products);
+    } catch (error) {
+      console.error("Failed to migrate a legacy image:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to migrate a product image to hosted storage" });
       return;
     }
 

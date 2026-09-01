@@ -194,11 +194,12 @@ describe("admin catalog API", () => {
     expect(payload.error).toMatch(/too large/i);
   });
 
-  it("rejects an inline base64 image that exceeds the size guard with a clear message", async () => {
+  it("returns a clear error when a legacy image needs migration but Blob storage isn't configured", async () => {
     const read = await fetch(`${baseUrl}/api/admin/catalog`);
     const original = await read.json() as { products: CatalogProduct[] };
-    // Under the 4MB body limit, but over the per-image inline-size guard (2,000,000 chars).
-    const tooLargeInlineImage = `data:image/png;base64,${"A".repeat(2_500_000)}`;
+    // Over the migration threshold (500,000 chars); this test's server has no
+    // BLOB_READ_WRITE_TOKEN, so the migration attempt should fail with a clear message.
+    const tooLargeInlineImage = `data:image/png;base64,${"A".repeat(600_000)}`;
     const product = { ...original.products[0], image: tooLargeInlineImage };
 
     const response = await fetch(`${baseUrl}/api/admin/catalog`, {
@@ -206,9 +207,9 @@ describe("admin catalog API", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: [product] }),
     });
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(500);
     const payload = await response.json() as { error?: string };
-    expect(payload.error).toMatch(/too large.*hosted URL/i);
+    expect(payload.error).toMatch(/could not be migrated.*Blob storage is not configured/i);
 
     // restore the original catalog for isolation
     await fetch(`${baseUrl}/api/admin/catalog`, {

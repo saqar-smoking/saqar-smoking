@@ -108,4 +108,64 @@ describe("image upload API", () => {
       body: JSON.stringify({ products: original.products }),
     });
   });
+
+  it("auto-migrates a legacy oversized base64 image to a hosted Blob URL on save (BECO-style product)", async () => {
+    const read = await fetch(`${baseUrl}/api/admin/catalog`);
+    const original = await read.json() as { products: CatalogProduct[] };
+    // Reproduces the real-world "beco soft max 12k" product: a ~2MB embedded data URL
+    // stored before Blob uploads existed, which used to block saving the whole catalog.
+    const legacyBase64Image = `data:image/jpeg;base64,${"A".repeat(2_069_758)}`;
+    const legacyProduct = { ...original.products[1], image: legacyBase64Image };
+    const otherProducts = original.products.filter((_, index) => index !== 1);
+
+    const save = await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: [otherProducts[0], legacyProduct, ...otherProducts.slice(1)] }),
+    });
+    expect(save.status).toBe(200);
+    const saved = await save.json() as { products: CatalogProduct[] };
+    const migrated = saved.products.find((product) => product.id === legacyProduct.id);
+    expect(migrated?.image.startsWith("data:")).toBe(false);
+    expect(migrated?.image).toMatch(/^https:\/\/example-blob\.public\.blob\.vercel-storage\.com\/products\/.+\.jpeg$/);
+
+    // the migrated URL must persist across a reload, not just the immediate response
+    const reload = await fetch(`${baseUrl}/api/admin/catalog`);
+    const reloaded = await reload.json() as { products: CatalogProduct[] };
+    expect(reloaded.products.find((product) => product.id === legacyProduct.id)?.image).toBe(migrated?.image);
+
+    // restore the original catalog for isolation
+    await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: original.products }),
+    });
+  });
+
+  it("leaves small existing base64 images and already-hosted URLs unchanged (MISJOY-style product)", async () => {
+    const read = await fetch(`${baseUrl}/api/admin/catalog`);
+    const original = await read.json() as { products: CatalogProduct[] };
+    // MISJOY's real embedded image is ~191KB, well under the migration threshold.
+    const smallBase64Image = `data:image/png;base64,${"B".repeat(50_000)}`;
+    const hostedUrl = "https://example-blob.public.blob.vercel-storage.com/products/already-hosted.jpg";
+    const smallImageProduct = { ...original.products[0], image: smallBase64Image };
+    const hostedProduct = { ...original.products[1], image: hostedUrl };
+
+    const save = await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: [smallImageProduct, hostedProduct, ...original.products.slice(2)] }),
+    });
+    expect(save.status).toBe(200);
+    const saved = await save.json() as { products: CatalogProduct[] };
+    expect(saved.products.find((product) => product.id === smallImageProduct.id)?.image).toBe(smallBase64Image);
+    expect(saved.products.find((product) => product.id === hostedProduct.id)?.image).toBe(hostedUrl);
+
+    // restore the original catalog for isolation
+    await fetch(`${baseUrl}/api/admin/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: original.products }),
+    });
+  });
 });
