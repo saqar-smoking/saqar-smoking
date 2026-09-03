@@ -46,7 +46,7 @@ export const getCatalogSnapshot = (): CatalogSnapshot => {
   const products = catalogProducts.filter((product) => !product.archived);
   const brands = Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).sort();
   const categories = Array.from(new Set(products.map((product) => product.category))).sort();
-  const flavors = Array.from(new Set(products.flatMap((product) => product.keywords))).sort();
+  const flavors = Array.from(new Set(products.flatMap((product) => [...product.keywords, ...(Array.isArray(product.variants) ? product.variants.map((variant) => variant.name) : [])]))).sort();
   return { products, metadata: { categories, brands, flavors } };
 };
 

@@ -62,6 +62,17 @@ describe("cart operations", () => {
     expect(getCartSummary(cart).cartCount).toBe(0);
   });
 
+  it("keeps different flavors as separate cart lines", () => {
+    const productId = catalogProducts[0]!.id;
+    catalogProducts[0]!.variants = [
+      { id: "mango", name: "Mango", availability: "available" },
+      { id: "ice", name: "Black Ice", availability: "available" },
+    ];
+    const cart = addLine(addLine([], productId, 1, "mango"), productId, 2, "ice");
+    expect(getCartSummary(cart).cartProducts.map(line => [line.variant?.id, line.quantity])).toEqual([["mango", 1], ["ice", 2]]);
+    catalogProducts[0]!.variants = undefined;
+  });
+
   it("calculates a priced subtotal and uses null while any price is unknown", () => {
     const pricedId = catalogProducts[0]!.id;
     const unknownId = catalogProducts[1]!.id;
@@ -91,6 +102,12 @@ describe("WhatsApp order message", () => {
     expect(message).toContain("Place Your Order");
     expect(message).toContain(`${product.name} x 2`);
     expect(message).toContain("Total: AED 360.00");
+  });
+
+  it("includes the selected flavor in order messages", () => {
+    const product = catalogProducts[0]!;
+    const message = buildOrderWhatsAppMessage(commerceCopy.en, [{ product, variant: { id: "mango", name: "Mango", availability: "available" }, quantity: 1 }], 100);
+    expect(message).toContain("Flavor: Mango");
   });
 
   it("labels unknown prices for WhatsApp confirmation instead of fabricating totals", () => {

@@ -46,7 +46,7 @@ export default function ShopPage() {
     const min = Number(minPrice) || 0;
     const max = Number(maxPrice) || Number.POSITIVE_INFINITY;
     const filtered = products.filter((product) => {
-      const searchable = [product.name, product.brand, product.category, ...product.keywords].join(" ").toLowerCase();
+      const searchable = [product.name, product.brand, product.category, ...product.keywords, ...(Array.isArray(product.variants) ? product.variants.map((variant) => variant.name) : [])].join(" ").toLowerCase();
       const matchesQuery = !normalizedQuery || searchable.includes(normalizedQuery);
       const matchesCategory = category === "all" || product.category === category;
       const matchesBrand = brand === "all" || product.brand === brand;

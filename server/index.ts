@@ -295,7 +295,7 @@ export const createApp = () => {
       metadata: {
         categories: [...VALID_CATEGORIES].sort(),
         brands: Array.from(new Set(products.map((product) => product.brand).filter(Boolean))).sort(),
-        flavors: Array.from(new Set(products.flatMap((product) => product.keywords))).sort(),
+        flavors: Array.from(new Set(products.flatMap((product) => [...product.keywords, ...(product.variants ?? []).map((variant) => variant.name)]))).sort(),
       },
     };
 

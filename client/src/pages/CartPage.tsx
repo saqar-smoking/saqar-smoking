@@ -5,6 +5,125 @@ import { formatAED } from "@/lib/catalog";
 import { useCommerce } from "@/contexts/CommerceContext";
 
 export default function CartPage() {
-  const { t, cartProducts, cartCount, subtotal, removeFromCart, setQuantity } = useCommerce();
-  return <div className="commerce-shell"><CommerceHeader /><main className="commerce-main"><div className="commerce-frame commerce-breadcrumb"><Link href="/shop"><ArrowLeft size={14} /> {t.continueShopping}</Link><span>/</span><strong>{t.cart}</strong></div><section className="commerce-frame cart-page"><div className="commerce-page-heading"><span className="commerce-eyebrow">02 / {t.cart}</span><h1>{t.cart}<em>.</em></h1><span>{cartCount} {cartCount === 1 ? t.item : t.items}</span></div>{cartProducts.length === 0 ? <div className="cart-empty"><ShoppingBag size={34} /><h2>{t.cartEmpty}</h2><Link className="commerce-button commerce-button--dark" href="/shop">{t.browseCollection} →</Link></div> : <div className="cart-layout"><div className="cart-lines">{cartProducts.map(({ product, quantity }) => <article className="cart-line" key={product.id}><Link href={`/product/${product.id}`} className="cart-line__image"><img src={product.image} alt="" /></Link><div className="cart-line__info"><small>{product.brand}</small><h2>{product.name}</h2><span>{product.priceAED === null ? t.priceToConfirm : formatAED(product.priceAED)}</span><Link href={`/order?productId=${encodeURIComponent(product.id)}&quantity=${quantity}`}>Order</Link></div><div className="cart-line__controls"><div className="quantity-control"><button onClick={() => setQuantity(product.id, quantity - 1)} aria-label="Decrease quantity"><Minus size={14} /></button><strong>{quantity}</strong><button onClick={() => setQuantity(product.id, quantity + 1)} aria-label="Increase quantity"><Plus size={14} /></button></div><button className="cart-remove" onClick={() => removeFromCart(product.id)}><Trash2 size={15} /> {t.remove}</button></div></article>)}</div><aside className="cart-summary"><h2>{t.orderSummary}</h2><div><span>{t.item} · {cartCount}</span><strong>{subtotal === null ? t.priceToConfirm : `AED ${subtotal.toFixed(2)}`}</strong></div><div className="cart-summary__total"><span>{t.total}</span><strong>{subtotal === null ? t.priceToConfirm : `AED ${subtotal.toFixed(2)}`}</strong></div><Link className="commerce-button commerce-button--dark" href="/order">Place Your Order →</Link><p>{t.secureNote}</p></aside></div>}</section></main></div>;
+  const { t, cartProducts, cartCount, subtotal, removeFromCart, setQuantity } =
+    useCommerce();
+  return (
+    <div className="commerce-shell">
+      <CommerceHeader />
+      <main className="commerce-main">
+        <div className="commerce-frame commerce-breadcrumb">
+          <Link href="/shop">
+            <ArrowLeft size={14} /> {t.continueShopping}
+          </Link>
+          <span>/</span>
+          <strong>{t.cart}</strong>
+        </div>
+        <section className="commerce-frame cart-page">
+          <div className="commerce-page-heading">
+            <span className="commerce-eyebrow">02 / {t.cart}</span>
+            <h1>
+              {t.cart}
+              <em>.</em>
+            </h1>
+            <span>
+              {cartCount} {cartCount === 1 ? t.item : t.items}
+            </span>
+          </div>
+          {cartProducts.length === 0 ? (
+            <div className="cart-empty">
+              <ShoppingBag size={34} />
+              <h2>{t.cartEmpty}</h2>
+              <Link
+                className="commerce-button commerce-button--dark"
+                href="/shop"
+              >
+                {t.browseCollection} →
+              </Link>
+            </div>
+          ) : (
+            <div className="cart-layout">
+              <div className="cart-lines">
+                {cartProducts.map(({ product, variant, quantity }) => (
+                  <article className="cart-line" key={`${product.id}-${variant?.id ?? "base"}`}>
+                    <Link
+                      href={`/product/${product.id}`}
+                      className="cart-line__image"
+                    >
+                      <img src={product.image} alt="" />
+                    </Link>
+                    <div className="cart-line__info">
+                      <small>{product.brand}</small>
+                      <h2>{product.name}</h2>
+                      {variant ? <small className="cart-line__variant">{t.flavor}: {variant.name}</small> : null}
+                      <span>
+                        {product.priceAED === null
+                          ? t.priceToConfirm
+                          : formatAED(product.priceAED)}
+                      </span>
+                      <Link
+                        href={`/order?productId=${encodeURIComponent(product.id)}&variantId=${encodeURIComponent(variant?.id ?? "")}&quantity=${quantity}`}
+                      >
+                        Order
+                      </Link>
+                    </div>
+                    <div className="cart-line__controls">
+                      <div className="quantity-control">
+                        <button
+                          onClick={() => setQuantity(product.id, quantity - 1, variant?.id)}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <strong>{quantity}</strong>
+                        <button
+                          onClick={() => setQuantity(product.id, quantity + 1, variant?.id)}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <button
+                        className="cart-remove"
+                        onClick={() => removeFromCart(product.id, variant?.id)}
+                      >
+                        <Trash2 size={15} /> {t.remove}
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <aside className="cart-summary">
+                <h2>{t.orderSummary}</h2>
+                <div>
+                  <span>
+                    {t.item} · {cartCount}
+                  </span>
+                  <strong>
+                    {subtotal === null
+                      ? t.priceToConfirm
+                      : `AED ${subtotal.toFixed(2)}`}
+                  </strong>
+                </div>
+                <div className="cart-summary__total">
+                  <span>{t.total}</span>
+                  <strong>
+                    {subtotal === null
+                      ? t.priceToConfirm
+                      : `AED ${subtotal.toFixed(2)}`}
+                  </strong>
+                </div>
+                <Link
+                  className="commerce-button commerce-button--dark"
+                  href="/order"
+                >
+                  Place Your Order →
+                </Link>
+                <p>{t.secureNote}</p>
+              </aside>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
 }

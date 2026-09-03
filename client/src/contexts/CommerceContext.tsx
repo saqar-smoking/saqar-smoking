@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CatalogProduct } from "@/lib/catalog";
-import { addLine, getCartSummary, removeLine, setLineQuantity, type CartLine } from "@/lib/cart";
+import { addLine, getCartSummary, removeLine, setLineQuantity, type CartLine, type CartProductLine } from "@/lib/cart";
 import { commerceCopy, type Language } from "@/lib/translations";
 
 type CartContextValue = {
@@ -9,12 +9,12 @@ type CartContextValue = {
   t: typeof commerceCopy.en;
   isRTL: boolean;
   cart: CartLine[];
-  cartProducts: Array<{ product: CatalogProduct; quantity: number }>;
+  cartProducts: CartProductLine[];
   cartCount: number;
   subtotal: number | null;
-  addToCart: (productId: string, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  setQuantity: (productId: string, quantity: number) => void;
+  addToCart: (productId: string, quantity?: number, variantId?: string) => void;
+  removeFromCart: (productId: string, variantId?: string) => void;
+  setQuantity: (productId: string, quantity: number, variantId?: string) => void;
   clearCart: () => void;
 };
 
@@ -29,9 +29,9 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
   useEffect(() => { localStorage.setItem("al-saqaar-language", language); document.documentElement.lang = language; document.documentElement.dir = language === "en" ? "ltr" : "rtl"; }, [language]);
   useEffect(() => { localStorage.setItem("al-saqaar-cart", JSON.stringify(cart)); }, [cart]);
 
-  const addToCart = (productId: string, quantity = 1) => setCart((current) => addLine(current, productId, quantity));
-  const removeFromCart = (productId: string) => setCart((current) => removeLine(current, productId));
-  const setQuantity = (productId: string, quantity: number) => setCart((current) => setLineQuantity(current, productId, quantity));
+  const addToCart = (productId: string, quantity = 1, variantId?: string) => setCart((current) => addLine(current, productId, quantity, variantId));
+  const removeFromCart = (productId: string, variantId?: string) => setCart((current) => removeLine(current, productId, variantId));
+  const setQuantity = (productId: string, quantity: number, variantId?: string) => setCart((current) => setLineQuantity(current, productId, quantity, variantId));
   const clearCart = () => setCart([]);
   const { cartProducts, cartCount, subtotal } = useMemo(() => getCartSummary(cart), [cart]);
   const value = useMemo(() => ({ language, setLanguage, t: commerceCopy[language], isRTL: language !== "en", cart, cartProducts, cartCount, subtotal, addToCart, removeFromCart, setQuantity, clearCart }), [language, cart, cartProducts, cartCount, subtotal]);
